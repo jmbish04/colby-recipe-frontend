@@ -35,7 +35,7 @@
             "cloudflare-docs: How to customize themes in shadcn/ui using CSS variables."
           ],
           "sub_tasks": [
-            {"id": "SUB-102-1", "status": "To Do", "description": "Run the `shadcn-ui init` command."},
+            {"id": "SUB-102-1", "status": "To Do", "description": "Run the `shadcnui@latest init` command."},
             {"id": "SUB-102-2", "status": "To Do", "description": "Define color palette and typography in `index.css`."},
             {"id": "SUB-102-3", "status": "To Do", "description": "Add a few core components like Button, Input, and Card."}
           ]
