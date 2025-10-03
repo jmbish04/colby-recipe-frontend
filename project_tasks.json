@@ -1,0 +1,200 @@
+{
+  "epics": [
+    {
+      "id": "EPIC-1",
+      "name": "Project Setup & Core Architecture",
+      "tasks": [
+        {
+          "id": "TASK-101",
+          "name": "Initialize Vite + React + TypeScript Project",
+          "description": "Set up the basic project structure using Vite, configure TypeScript, and install base dependencies like React and react-dom.",
+          "success_criteria": "A new Vite project is created and runs successfully with `npm run dev`. TypeScript is configured with strict mode.",
+          "unit_tests": [
+            "Ensure the main App component renders without errors."
+          ],
+          "mcp_queries": [
+            "What is the best way to structure a production-ready Vite + React application?",
+            "How to set up Tailwind CSS with a Vite React project."
+          ],
+          "sub_tasks": [
+            {"id": "SUB-101-1", "status": "To Do", "description": "Run `npm create vite@latest` with the react-ts template."},
+            {"id": "SUB-101-2", "status": "To Do", "description": "Install and configure Tailwind CSS."},
+            {"id": "SUB-101-3", "status": "To Do", "description": "Install `react-router-dom` for routing."}
+          ]
+        },
+        {
+          "id": "TASK-102",
+          "name": "Implement shadcn/ui and Theme",
+          "description": "Integrate the shadcn/ui component library, set up the component structure, and define the application's visual theme (colors, fonts).",
+          "success_criteria": "shadcn/ui components (Button, Card, etc.) can be imported and used throughout the application. The app reflects the custom theme.",
+          "unit_tests": [
+            "Test that a custom-themed Button component renders correctly."
+          ],
+          "mcp_queries": [
+            "Step-by-step guide to installing shadcn/ui in a Vite React project.",
+            "How to customize themes in shadcn/ui using CSS variables."
+          ],
+          "sub_tasks": [
+            {"id": "SUB-102-1", "status": "To Do", "description": "Run the `shadcn-ui init` command."},
+            {"id": "SUB-102-2", "status": "To Do", "description": "Define color palette and typography in `index.css`."},
+            {"id": "SUB-102-3", "status": "To Do", "description": "Add a few core components like Button, Input, and Card."}
+          ]
+        },
+        {
+          "id": "TASK-103",
+          "name": "Set Up API Client & State Management",
+          "description": "Implement a centralized API client for interacting with the Colby backend. Set up Zustand for global state and TanStack Query for server state.",
+          "success_criteria": "A custom hook `useApiClient` is available. A Zustand store for user state is created. `QueryClientProvider` is set up at the root of the app.",
+          "unit_tests": [
+            "Test that an API hook successfully fetches data from a mock endpoint.",
+            "Test that updating the Zustand user store works correctly."
+          ],
+          "mcp_queries": [
+            "Best practices for creating a reusable API client with `fetch` in React.",
+            "How to integrate TanStack Query and Zustand in a React application.",
+            "Handling authentication tokens with TanStack Query mutations."
+          ],
+          "sub_tasks": [
+            {"id": "SUB-103-1", "status": "To Do", "description": "Create an `api.ts` file with a configured fetch instance."},
+            {"id": "SUB-103-2", "status": "To Do", "description": "Install and create a `useUserStore.ts` with Zustand."},
+            {"id": "SUB-103-3", "status": "To Do", "description": "Install TanStack Query and wrap the app in `QueryClientProvider`."}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EPIC-2",
+      "name": "Smart Kitchen Hub & Appliance Management",
+      "tasks": [
+        {
+          "id": "TASK-201",
+          "name": "Build 'My Kitchen' Appliance List UI",
+          "description": "Create the main page for viewing, adding, and deleting kitchen appliances.",
+          "success_criteria": "Users can see a list of their appliances fetched from the backend. A form is available to add a new appliance.",
+          "unit_tests": [
+            "Test that the appliance list renders correctly with mock data.",
+            "Test the 'Add Appliance' form validation."
+          ],
+          "mcp_queries": [
+            "How to handle multipart/form-data uploads from a React form without a full page refresh.",
+            "Using TanStack Query for optimistic updates when deleting an item from a list."
+          ],
+          "sub_tasks": [
+            {"id": "SUB-201-1", "status": "To Do", "description": "Create a `useAppliances` custom hook using TanStack Query to fetch from `GET /api/kitchen/appliances`."},
+            {"id": "SUB-201-2", "status": "To Do", "description": "Build the appliance card component using shadcn/ui Card."},
+            {"id": "SUB-201-3", "status": "To Do", "description": "Implement the 'Add Appliance' form within a shadcn/ui Dialog component."},
+            {"id": "SUB-201-4", "status": "To Do", "description": "Implement the delete functionality with a confirmation dialog."}
+          ]
+        },
+        {
+          "id": "TASK-202",
+          "name": "Implement Asynchronous Manual Processing UI",
+          "description": "Handle the asynchronous nature of appliance manual processing. This involves polling for status updates and reflecting the state in the UI.",
+          "success_criteria": "When a user uploads a manual, the UI shows a 'Processing' state. The UI updates automatically to 'Completed' or 'Failed' without a page refresh.",
+          "unit_tests": [
+            "Mock the status endpoint and test that the UI correctly transitions through `QUEUED`, `PROCESSING`, and `COMPLETED` states."
+          ],
+          "mcp_queries": [
+            "How to implement polling with TanStack Query's `refetchInterval`.",
+            "Best practices for displaying asynchronous job statuses to users in React."
+          ],
+          "sub_tasks": [
+            {"id": "SUB-202-1", "status": "To Do", "description": "When the `POST /api/kitchen/appliances` call succeeds, trigger a new TanStack Query to poll `GET /api/kitchen/appliances/:id/status`."},
+            {"id": "SUB-202-2", "status": "To Do", "description": "Disable polling when the status is 'COMPLETED' or 'FAILED'."},
+            {"id": "SUB-202-3", "status": "To Do", "description": "Display a spinner or progress bar on the appliance card while processing."}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EPIC-3",
+      "name": "AI Sous Chef & Generative UI",
+      "tasks": [
+        {
+          "id": "TASK-301",
+          "name": "Build Multi-Modal Chat Interface",
+          "description": "Create the core chat component that supports text, voice, and image inputs.",
+          "success_criteria": "A user can type a message, record a voice memo, or upload an image. The inputs are correctly sent to the respective backend APIs.",
+          "unit_tests": [
+            "Test the microphone recording logic using browser mocks.",
+            "Test image file selection and conversion to a format suitable for the API."
+          ],
+          "mcp_queries": [
+            "Using the Web Audio API (`MediaRecorder`) in React to capture and upload audio.",
+            "How to read an image file as a Blob or base64 string in a React component."
+          ],
+          "sub_tasks": [
+            {"id": "SUB-301-1", "status": "To Do", "description": "Build the chat input component with buttons for voice and image upload."},
+            {"id": "SUB-301-2", "status": "To Do", "description": "Implement the voice recording logic using `MediaRecorder` and the `/api/transcribe` endpoint."},
+            {"id": "SUB-301-3", "status": "To Do", "description": "Implement the image upload logic for the `/api/ingest/image` endpoint."}
+          ]
+        },
+        {
+          "id": "TASK-302",
+          "name": "Implement Generative Recipe Card UI",
+          "description": "Develop a system to parse AI responses and dynamically render interactive recipe cards within the chat history.",
+          "success_criteria": "When the AI responds with a recipe, a rich card is displayed instead of plain text. Ingredient items have 'Add to List' buttons that work.",
+          "unit_tests": [
+            "Test the parser with various mock AI responses to ensure it correctly renders the recipe card.",
+            "Test the 'Add to List' button's interaction with the shopping list state."
+          ],
+          "mcp_queries": [
+            "How to render Markdown securely in React using a library like `react-markdown`.",
+            "Strategies for building a generative UI system in React where components are chosen based on API data."
+          ],
+          "sub_tasks": [
+            {"id": "SUB-302-1", "status": "To Do", "description": "Create a `RecipeCard` component that accepts a recipe object and renders it beautifully."},
+            {"id": "SUB-302-2", "status": "To Do", "description": "In the chat component, check if the AI response contains structured recipe data."},
+            {"id": "SUB-302-3", "status": "To Do", "description": "If recipe data is present, render the `RecipeCard` component instead of a plain text message."},
+            {"id": "SUB-302-4", "status": "To Do", "description": "Connect the 'Add to List' buttons to the shopping list state/API."}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EPIC-4",
+      "name": "Cooking Conductor & Recipe Experience",
+      "tasks": [
+        {
+          "id": "TASK-401",
+          "name": "Develop Phased Prep and Flowchart UI",
+          "description": "On the recipe detail page, implement the UI for displaying phased ingredient prep lists and the Mermaid.js cooking flowchart.",
+          "success_criteria": "The recipe page correctly fetches and displays ingredients grouped by prep phase. A Mermaid diagram is rendered from the API response.",
+          "unit_tests": [
+            "Test that the Accordion component correctly displays phased ingredients from mock data.",
+            "Test that the Mermaid component renders a valid graph from a mock API string."
+          ],
+          "mcp_queries": [
+            "How to integrate and render Mermaid.js diagrams in a React application.",
+            "Using shadcn/ui Accordion component to create collapsible sections."
+          ],
+          "sub_tasks": [
+            {"id": "SUB-401-1", "status": "To Do", "description": "Update the `useRecipe` hook to fetch data from `GET /api/recipes/:id`."},
+            {"id": "SUB-401-2", "status": "To Do", "description": "Create a component that renders the `prep_phases` data using Accordions."},
+            {"id": "SUB-401-3", "status": "To Do", "description": "Create a `Flowchart` component that fetches from `/api/recipes/:id/flowchart` and renders the diagram using the Mermaid library."}
+          ]
+        },
+        {
+          "id": "TASK-402",
+          "name": "Implement Appliance Adaptation Feature",
+          "description": "Allow users to select one of their registered appliances and see a tailored version of the recipe instructions.",
+          "success_criteria": "A button on the recipe page, 'Adapt for My Appliance', opens a dialog for the user to choose an appliance. The adapted steps are then displayed clearly.",
+          "unit_tests": [
+            "Test that the `POST /api/recipes/:id/adapt` API is called with the correct recipe and appliance IDs.",
+            "Test that the UI correctly displays the new, tailored steps."
+          ],
+          "mcp_queries": [
+            "How to display a 'diff' or comparison between two sets of text in React.",
+            "Using shadcn/ui Dialog and Select components to create a selection flow."
+          ],
+          "sub_tasks": [
+            {"id": "SUB-402-1", "status": "To Do", "description": "Add a button to the recipe page that is only visible if the user has registered appliances."},
+            {"id": "SUB-402-2", "status": "To Do", "description": "Create a dialog that lists the user's appliances from the `useAppliances` hook."},
+            {"id": "SUB-402-3", "status": "To Do", "description": "On selection, call the `/api/recipes/:id/adapt` endpoint and display the results."},
+            {"id": "SUB-402-4", "status": "To Do", "description": "Consider using a Tab or side-by-side view to compare original vs. adapted steps."}
+          ]
+        }
+      ]
+    }
+  ]
+}
