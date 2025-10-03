@@ -13,8 +13,8 @@
             "Ensure the main App component renders without errors."
           ],
           "mcp_queries": [
-            "What is the best way to structure a production-ready Vite + React application?",
-            "How to set up Tailwind CSS with a Vite React project."
+            "cloudflare-docs: What is the best way to structure a production-ready Vite + React application?",
+            "cloudflare-docs: How to set up Tailwind CSS with a Vite React project."
           ],
           "sub_tasks": [
             {"id": "SUB-101-1", "status": "To Do", "description": "Run `npm create vite@latest` with the react-ts template."},
@@ -31,8 +31,8 @@
             "Test that a custom-themed Button component renders correctly."
           ],
           "mcp_queries": [
-            "Step-by-step guide to installing shadcn/ui in a Vite React project.",
-            "How to customize themes in shadcn/ui using CSS variables."
+            "cloudflare-docs: Step-by-step guide to installing shadcn/ui in a Vite React project.",
+            "cloudflare-docs: How to customize themes in shadcn/ui using CSS variables."
           ],
           "sub_tasks": [
             {"id": "SUB-102-1", "status": "To Do", "description": "Run the `shadcn-ui init` command."},
@@ -50,9 +50,9 @@
             "Test that updating the Zustand user store works correctly."
           ],
           "mcp_queries": [
-            "Best practices for creating a reusable API client with `fetch` in React.",
-            "How to integrate TanStack Query and Zustand in a React application.",
-            "Handling authentication tokens with TanStack Query mutations."
+            "cloudflare-docs: Best practices for creating a reusable API client with `fetch` in React.",
+            "cloudflare-docs: How to integrate TanStack Query and Zustand in a React application.",
+            "cloudflare-docs: Handling authentication tokens with TanStack Query mutations."
           ],
           "sub_tasks": [
             {"id": "SUB-103-1", "status": "To Do", "description": "Create an `api.ts` file with a configured fetch instance."},
@@ -76,8 +76,8 @@
             "Test the 'Add Appliance' form validation."
           ],
           "mcp_queries": [
-            "How to handle multipart/form-data uploads from a React form without a full page refresh.",
-            "Using TanStack Query for optimistic updates when deleting an item from a list."
+            "cloudflare-docs: How to handle multipart/form-data uploads from a React form without a full page refresh.",
+            "cloudflare-docs: Using TanStack Query for optimistic updates when deleting an item from a list."
           ],
           "sub_tasks": [
             {"id": "SUB-201-1", "status": "To Do", "description": "Create a `useAppliances` custom hook using TanStack Query to fetch from `GET /api/kitchen/appliances`."},
@@ -95,8 +95,8 @@
             "Mock the status endpoint and test that the UI correctly transitions through `QUEUED`, `PROCESSING`, and `COMPLETED` states."
           ],
           "mcp_queries": [
-            "How to implement polling with TanStack Query's `refetchInterval`.",
-            "Best practices for displaying asynchronous job statuses to users in React."
+            "cloudflare-docs: How to implement polling with TanStack Query's `refetchInterval`.",
+            "cloudflare-docs: Best practices for displaying asynchronous job statuses to users in React."
           ],
           "sub_tasks": [
             {"id": "SUB-202-1", "status": "To Do", "description": "When the `POST /api/kitchen/appliances` call succeeds, trigger a new TanStack Query to poll `GET /api/kitchen/appliances/:id/status`."},
@@ -120,8 +120,8 @@
             "Test image file selection and conversion to a format suitable for the API."
           ],
           "mcp_queries": [
-            "Using the Web Audio API (`MediaRecorder`) in React to capture and upload audio.",
-            "How to read an image file as a Blob or base64 string in a React component."
+            "cloudflare-docs: Using the Web Audio API (`MediaRecorder`) in React to capture and upload audio.",
+            "cloudflare-docs: How to read an image file as a Blob or base64 string in a React component."
           ],
           "sub_tasks": [
             {"id": "SUB-301-1", "status": "To Do", "description": "Build the chat input component with buttons for voice and image upload."},
@@ -139,8 +139,8 @@
             "Test the 'Add to List' button's interaction with the shopping list state."
           ],
           "mcp_queries": [
-            "How to render Markdown securely in React using a library like `react-markdown`.",
-            "Strategies for building a generative UI system in React where components are chosen based on API data."
+            "cloudflare-docs: How to render Markdown securely in React using a library like `react-markdown`.",
+            "cloudflare-docs: Strategies for building a generative UI system in React where components are chosen based on API data."
           ],
           "sub_tasks": [
             {"id": "SUB-302-1", "status": "To Do", "description": "Create a `RecipeCard` component that accepts a recipe object and renders it beautifully."},
@@ -165,8 +165,8 @@
             "Test that the Mermaid component renders a valid graph from a mock API string."
           ],
           "mcp_queries": [
-            "How to integrate and render Mermaid.js diagrams in a React application.",
-            "Using shadcn/ui Accordion component to create collapsible sections."
+            "cloudflare-docs: How to integrate and render Mermaid.js diagrams in a React application.",
+            "cloudflare-docs: Using shadcn/ui Accordion component to create collapsible sections."
           ],
           "sub_tasks": [
             {"id": "SUB-401-1", "status": "To Do", "description": "Update the `useRecipe` hook to fetch data from `GET /api/recipes/:id`."},
@@ -184,8 +184,8 @@
             "Test that the UI correctly displays the new, tailored steps."
           ],
           "mcp_queries": [
-            "How to display a 'diff' or comparison between two sets of text in React.",
-            "Using shadcn/ui Dialog and Select components to create a selection flow."
+            "cloudflare-docs: How to display a 'diff' or comparison between two sets of text in React.",
+            "cloudflare-docs: Using shadcn/ui Dialog and Select components to create a selection flow."
           ],
           "sub_tasks": [
             {"id": "SUB-402-1", "status": "To Do", "description": "Add a button to the recipe page that is only visible if the user has registered appliances."},
