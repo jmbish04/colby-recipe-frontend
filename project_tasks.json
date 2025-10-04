@@ -26,6 +26,9 @@
           "id": "TASK-101",
           "name": "Initialize Vite + React + TypeScript Project with Cloudflare Workers",
           "description": "Set up the basic project structure using Vite with Cloudflare Vite plugin, configure TypeScript strict mode, and install base dependencies.",
+          "status": "completed",
+          "completedDate": "2025-10-04",
+          "notes": "Bootstrapped Vite + React + TypeScript app with Tailwind, React Router, Cloudflare Worker plugin, and wrangler tooling.",
           "success_criteria": "A new Vite project runs successfully with `npm run dev`. TypeScript is configured with strict mode. Cloudflare Vite plugin is integrated and worker runs locally.",
           "unit_tests": [
             "Ensure the main App component renders without errors.",
@@ -81,6 +84,9 @@
           "id": "TASK-102",
           "name": "Implement shadcn/ui and Design System",
           "description": "Integrate the shadcn/ui component library, set up the component structure, and define the application's visual theme (colors, fonts, spacing).",
+          "status": "completed",
+          "completedDate": "2025-10-04",
+          "notes": "Added shadcn/ui primitives, theme tokens, dark mode toggle, and composite recipe UI with toasts and forms.",
           "success_criteria": "shadcn/ui components can be imported and used throughout the application. The app reflects a custom theme with consistent design tokens.",
           "unit_tests": [
             "Test that a custom-themed Button component renders correctly",
@@ -150,6 +156,9 @@
           "id": "TASK-103",
           "name": "Set Up API Client, State Management & Authentication",
           "description": "Implement a centralized API client for the Cloudflare Workers backend. Set up Zustand for global state and TanStack Query for server state. Implement authentication flow.",
+          "status": "completed",
+          "completedDate": "2025-10-04",
+          "notes": "Added API client with token refresh, persisted auth store, React Query provider/hooks, and mock worker auth endpoints.",
           "success_criteria": "A custom hook `useApi` is available. A Zustand store for user/auth state is created. QueryClientProvider is set up. Authentication tokens are managed securely.",
           "unit_tests": [
             "Test that API hooks successfully fetch data from mock endpoints",
@@ -189,12 +198,12 @@
             ]
           },
           "sub_tasks": [
-            {"id": "SUB-103-1", "status": "To Do", "description": "Create `src/lib/api.ts` with configured fetch instance and auth headers"},
-            {"id": "SUB-103-2", "status": "To Do", "description": "Install and create `src/stores/useAuthStore.ts` with Zustand for auth state"},
-            {"id": "SUB-103-3", "status": "To Do", "description": "Install TanStack Query and wrap app in QueryClientProvider"},
-            {"id": "SUB-103-4", "status": "To Do", "description": "Create authentication hooks: useLogin, useLogout, useCurrentUser"},
-            {"id": "SUB-103-5", "status": "To Do", "description": "Implement token refresh logic and 401 error handling"},
-            {"id": "SUB-103-6", "status": "To Do", "description": "Set up global error toast using sonner"}
+            {"id": "SUB-103-1", "status": "completed", "description": "Create `src/lib/api.ts` with configured fetch instance and auth headers"},
+            {"id": "SUB-103-2", "status": "completed", "description": "Install and create `src/stores/useAuthStore.ts` with Zustand for auth state"},
+            {"id": "SUB-103-3", "status": "completed", "description": "Install TanStack Query and wrap app in QueryClientProvider"},
+            {"id": "SUB-103-4", "status": "completed", "description": "Create authentication hooks: useLogin, useLogout, useCurrentUser"},
+            {"id": "SUB-103-5", "status": "completed", "description": "Implement token refresh logic and 401 error handling"},
+            {"id": "SUB-103-6", "status": "completed", "description": "Set up global error toast using sonner"}
           ]
         },
         {
