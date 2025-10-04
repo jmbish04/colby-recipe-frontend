@@ -1,34 +1,34 @@
 # Prompt Phase 2 Handoff
 
-## Summary of Tasks 1-3
+## Summary of Tasks 1-4
 - **TASK-101**: Bootstrapped the Vite + React + TypeScript workspace with Cloudflare Worker integration, Tailwind, and routing scaffolding.
 - **TASK-102**: Established the shadcn/ui design system, including theming, dark mode, and composite recipe showcase components.
 - **TASK-103**: Implemented the auth-ready data layer—centralized API client with token refresh, TanStack Query provider, Zustand auth store with session persistence, auth hooks/UI, and Cloudflare Worker auth mocks.
+- **TASK-104**: Delivered the React Router app shell with lazy-loaded feature routes, TanStack Query-powered route prefetching, WCAG-labelled desktop navigation, and a mobile sheet experience built from shadcn primitives.
 
 ## Current Project State
 - React SPA builds and lints cleanly (`npm run lint`, `npm run build`).
-- Application shell demonstrates design system elements plus an `AuthPanel` wired to mock auth endpoints.
+- Application shell now includes responsive navigation with TanStack Query prefetching, hover/focus/touch hints, and accessible labelling that mirrors the desktop and mobile patterns.
+- Feature routes (chat, kitchen hub, recipes, planner) render inside the shared shell using suspense-driven skeleton fallbacks and simulated data fetchers.
 - Zustand store persists tokens in `sessionStorage`, auto-refreshes tokens, and keeps query cache synchronized.
 - Cloudflare Worker serves `/api/health` and `/api/auth/{login,refresh,me}` mock endpoints mirroring expected JSON contracts.
-- Documentation updated to reflect the new authentication/query layer.
+- Documentation updated to reflect the new authentication/query/navigation layer.
 
-## Recommended Next Steps (Phase 2)
-1. **TASK-104**: Implement React Router app shell, navigation, and route-level code-splitting.
-2. Define feature routes (e.g., chat, kitchen hub, recipe view) and connect them to TanStack Query hooks.
-3. Expand Worker mocks for kitchen/recipe endpoints to unblock UI development.
-4. Add integration tests covering login/logout and token refresh flows (Vitest + Testing Library).
-5. Evaluate toast deduplication and query error UX once more endpoints exist.
+## Recommended Next Steps (Phase 3)
+1. **TASK-201**: Build the "My Kitchen" appliance list UI, hooking TanStack Query to Worker mocks for CRUD operations and multipart uploads.
+2. Expand Worker mocks for kitchen/recipe endpoints to unblock UI development.
+3. Add integration tests covering navigation, login/logout, and token refresh flows (Vitest + Testing Library).
+4. Evaluate toast deduplication and query error UX once more endpoints exist.
 
 ## Ready-to-Use Prompt for Next Phase
 ```
-Open project_tasks.json and continue with TASK-104.
-- Build the React Router app shell with desktop + mobile navigation using shadcn components.
-- Implement lazy-loaded route modules for the primary feature areas (chat, kitchen hub, recipes, planner).
-- Ensure navigation state reflects the active route and includes accessible labels.
-- Wire TanStack Query prefetching for likely next routes.
-- Update README and project_tasks.json (status, notes, date) when TASK-104 is complete.
-- Run `npm run lint` and `npm run build` before committing.
-- Provide screenshots of new navigation experiences.
+Open project_tasks.json and continue with TASK-201.
+- Build the Smart Kitchen Hub appliance list UI with shadcn cards, dialogs, and progress indicators.
+- Wire TanStack Query hooks to new Worker mocks for listing, creating, and deleting appliances (including multipart uploads for manuals).
+- Ensure optimistic updates keep the UI responsive and WCAG-compliant during mutations.
+- Update README, project_tasks.json (status, notes, date), and PROMPT_PHASE_3.md when TASK-201 is complete.
+- Run `npm run lint`, `npm run build`, and `wrangler deploy --dry-run` before committing.
+- Capture updated screenshots demonstrating the kitchen hub experience.
 ```
 
 ## Technical Decisions & Patterns
