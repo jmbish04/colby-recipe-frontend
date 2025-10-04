@@ -122,7 +122,7 @@ async function request<T>(path: string, options: ApiRequestOptions = {}) {
       headers.set('authorization', `Bearer ${refreshedToken}`)
       response = await fetch(url, { method, body: payload, headers, signal })
     } catch (error) {
-      useAuthStore.getState().logout()
+      // The `refreshAccessToken` function already handles logging out on failure.
       throw error
     }
   }
