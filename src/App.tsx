@@ -159,7 +159,7 @@ export default function App() {
                       <FormField
                         control={form.control}
                         name="mealName"
-                        render={({ field }: { field: ControllerRenderProps<MealPlanFormValues, 'mealName'> }) => (
+                        render={({ field }) => (
                           <FormItem>
                             <FormLabel>Meal name</FormLabel>
                             <FormControl>
