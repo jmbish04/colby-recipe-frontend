@@ -1,4 +1,22 @@
 {
+  "project_meta": {
+    "name": "MenuForge",
+    "description": "AI-powered recipe management and meal planning application",
+    "tech_stack": {
+      "frontend": "React 18+ with TypeScript, Vite, shadcn/ui, Tailwind CSS",
+      "backend": "Cloudflare Workers API",
+      "deployment": "Cloudflare Workers with Static Assets",
+      "state_management": "Zustand (client state) + TanStack Query (server state)",
+      "routing": "React Router v6 (client-side SPA)"
+    },
+    "key_principles": [
+      "No Next.js or SSR - pure client-side SPA",
+      "Cloudflare Workers for backend API",
+      "Progressive enhancement with offline support",
+      "Mobile-first responsive design",
+      "Accessibility (WCAG 2.1 AA compliance)"
+    ]
+  },
   "epics": [
     {
       "id": "EPIC-1",
@@ -6,58 +24,222 @@
       "tasks": [
         {
           "id": "TASK-101",
-          "name": "Initialize Vite + React + TypeScript Project",
-          "description": "Set up the basic project structure using Vite, configure TypeScript, and install base dependencies like React and react-dom.",
-          "success_criteria": "A new Vite project is created and runs successfully with `npm run dev`. TypeScript is configured with strict mode.",
+          "name": "Initialize Vite + React + TypeScript Project with Cloudflare Workers",
+          "description": "Set up the basic project structure using Vite with Cloudflare Vite plugin, configure TypeScript strict mode, and install base dependencies.",
+          "success_criteria": "A new Vite project runs successfully with `npm run dev`. TypeScript is configured with strict mode. Cloudflare Vite plugin is integrated and worker runs locally.",
           "unit_tests": [
-            "Ensure the main App component renders without errors."
+            "Ensure the main App component renders without errors.",
+            "Verify Cloudflare runtime is active in development",
+            "Test that environment variables are accessible"
           ],
-          "mcp_queries": [
-            "cloudflare-docs: What is the best way to structure a production-ready Vite + React application?",
-            "cloudflare-docs: How to set up Tailwind CSS with a Vite React project."
-          ],
+          "cloudflare_implementation": {
+            "setup_command": "npm create cloudflare@latest -- menuforge-app --framework=react",
+            "config_file": "wrangler.jsonc",
+            "key_settings": {
+              "compatibility_date": "2025-04-03",
+              "assets": {
+                "directory": "./dist",
+                "not_found_handling": "single-page-application",
+                "run_worker_first": ["/api/*"]
+              },
+              "main": "./worker/index.ts"
+            },
+            "vite_config": "Use @cloudflare/vite-plugin to run Worker in Cloudflare runtime during development. Enables access to local emulations of bindings.",
+            "best_practices": [
+              "Use Cloudflare Vite plugin for development to match production environment",
+              "Configure run_worker_first to route API calls to Worker before asset serving",
+              "Set not_found_handling to single-page-application for React Router",
+              "Use wrangler.jsonc for better IDE support with comments"
+            ],
+            "routing_behavior": "Cloudflare first tries to match request path against static assets. Failing that, invokes Worker if run_worker_first matches. For navigation requests (Sec-Fetch-Mode: navigate), serves /index.html for SPA routing."
+          },
+          "shadcn_implementation": {
+            "init_command": "npx shadcn@latest init",
+            "components_to_add": ["button", "card", "input", "label"],
+            "configuration": {
+              "style": "New York or Default (user preference)",
+              "base_color": "Slate or custom",
+              "css_variables": true,
+              "tailwind_config": "Extend with custom theme colors in tailwind.config.js"
+            },
+            "best_practices": [
+              "Use shadcn CLI to add components as needed",
+              "Customize theme colors via CSS variables in index.css",
+              "Keep component library minimal - only add what's used",
+              "All components are fully customizable source code"
+            ]
+          },
           "sub_tasks": [
-            {"id": "SUB-101-1", "status": "To Do", "description": "Run `npm create vite@latest` with the react-ts template."},
-            {"id": "SUB-101-2", "status": "To Do", "description": "Install and configure Tailwind CSS."},
-            {"id": "SUB-101-3", "status": "To Do", "description": "Install `react-router-dom` for routing."}
+            {"id": "SUB-101-1", "status": "To Do", "description": "Run `npm create cloudflare@latest -- menuforge-app --framework=react`"},
+            {"id": "SUB-101-2", "status": "To Do", "description": "Configure wrangler.jsonc with SPA routing and API paths"},
+            {"id": "SUB-101-3", "status": "To Do", "description": "Install and configure Tailwind CSS"},
+            {"id": "SUB-101-4", "status": "To Do", "description": "Install `react-router-dom` for client-side routing"},
+            {"id": "SUB-101-5", "status": "To Do", "description": "Set up TypeScript strict mode in tsconfig.json"}
           ]
         },
         {
           "id": "TASK-102",
-          "name": "Implement shadcn/ui and Theme",
-          "description": "Integrate the shadcn/ui component library, set up the component structure, and define the application's visual theme (colors, fonts).",
-          "success_criteria": "shadcn/ui components (Button, Card, etc.) can be imported and used throughout the application. The app reflects the custom theme.",
+          "name": "Implement shadcn/ui and Design System",
+          "description": "Integrate the shadcn/ui component library, set up the component structure, and define the application's visual theme (colors, fonts, spacing).",
+          "success_criteria": "shadcn/ui components can be imported and used throughout the application. The app reflects a custom theme with consistent design tokens.",
           "unit_tests": [
-            "Test that a custom-themed Button component renders correctly."
+            "Test that a custom-themed Button component renders correctly",
+            "Verify theme colors are applied via CSS variables",
+            "Test dark mode toggle functionality"
           ],
-          "mcp_queries": [
-            "cloudflare-docs: Step-by-step guide to installing shadcn/ui in a Vite React project.",
-            "cloudflare-docs: How to customize themes in shadcn/ui using CSS variables."
-          ],
+          "cloudflare_implementation": {
+            "best_practices": [
+              "No special Cloudflare considerations for shadcn/ui",
+              "Ensure all component imports are optimized for tree-shaking",
+              "Use Vite's code splitting to lazy-load component-heavy routes"
+            ]
+          },
+          "shadcn_implementation": {
+            "initialization": "Run `npx shadcn@latest init` to set up base configuration",
+            "core_components": [
+              "button - primary action buttons",
+              "card - recipe cards, info panels",
+              "input - form fields",
+              "label - form labels",
+              "dialog - modals for actions",
+              "accordion - collapsible sections",
+              "toast - notifications (use sonner)",
+              "form - form handling with react-hook-form",
+              "select - dropdowns",
+              "skeleton - loading states",
+              "progress - upload/processing progress",
+              "tabs - tabbed interfaces",
+              "separator - visual dividers",
+              "badge - tags and labels"
+            ],
+            "theme_customization": {
+              "file": "src/index.css",
+              "css_variables": {
+                "--background": "Main background color",
+                "--foreground": "Main text color",
+                "--primary": "Primary brand color",
+                "--primary-foreground": "Text on primary",
+                "--secondary": "Secondary brand color",
+                "--muted": "Muted backgrounds",
+                "--accent": "Accent highlights",
+                "--destructive": "Error/delete actions",
+                "--border": "Border colors",
+                "--input": "Input field borders",
+                "--ring": "Focus ring color",
+                "--radius": "Border radius value"
+              }
+            },
+            "dark_mode_setup": "Use class-based dark mode with next-themes or custom implementation. Toggle between light/dark by adding/removing 'dark' class on html element.",
+            "best_practices": [
+              "Use the CLI to add components: `npx shadcn@latest add <component>`",
+              "Customize components after adding them - they're your source code",
+              "Create composite components by combining base shadcn components",
+              "Use Tailwind utility classes for component-specific styling",
+              "Follow shadcn naming conventions for consistency"
+            ]
+          },
           "sub_tasks": [
-            {"id": "SUB-102-1", "status": "To Do", "description": "Run the `shadcnui@latest init` command."},
-            {"id": "SUB-102-2", "status": "To Do", "description": "Define color palette and typography in `index.css`."},
-            {"id": "SUB-102-3", "status": "To Do", "description": "Add a few core components like Button, Input, and Card."}
+            {"id": "SUB-102-1", "status": "To Do", "description": "Run `npx shadcn@latest init` command"},
+            {"id": "SUB-102-2", "status": "To Do", "description": "Define color palette and typography in `src/index.css`"},
+            {"id": "SUB-102-3", "status": "To Do", "description": "Add core shadcn components: button, input, card, dialog, toast"},
+            {"id": "SUB-102-4", "status": "To Do", "description": "Set up dark mode with class-based theming"},
+            {"id": "SUB-102-5", "status": "To Do", "description": "Create custom composite components (e.g., RecipeCard, IngredientList)"}
           ]
         },
         {
           "id": "TASK-103",
-          "name": "Set Up API Client & State Management",
-          "description": "Implement a centralized API client for interacting with the Colby backend. Set up Zustand for global state and TanStack Query for server state.",
-          "success_criteria": "A custom hook `useApiClient` is available. A Zustand store for user state is created. `QueryClientProvider` is set up at the root of the app.",
+          "name": "Set Up API Client, State Management & Authentication",
+          "description": "Implement a centralized API client for the Cloudflare Workers backend. Set up Zustand for global state and TanStack Query for server state. Implement authentication flow.",
+          "success_criteria": "A custom hook `useApi` is available. A Zustand store for user/auth state is created. QueryClientProvider is set up. Authentication tokens are managed securely.",
           "unit_tests": [
-            "Test that an API hook successfully fetches data from a mock endpoint.",
-            "Test that updating the Zustand user store works correctly."
+            "Test that API hooks successfully fetch data from mock endpoints",
+            "Test that authentication token is included in requests",
+            "Test that Zustand user store updates correctly",
+            "Test token refresh logic",
+            "Test logout clears state properly"
           ],
-          "mcp_queries": [
-            "cloudflare-docs: Best practices for creating a reusable API client with `fetch` in React.",
-            "cloudflare-docs: How to integrate TanStack Query and Zustand in a React application.",
-            "cloudflare-docs: Handling authentication tokens with TanStack Query mutations."
-          ],
+          "cloudflare_implementation": {
+            "api_base_url": "https://colby-recipe-backend.hacolby.workers.dev",
+            "authentication": {
+              "method": "Bearer token or X-API-Key header",
+              "storage": "Store tokens in memory + sessionStorage for tab persistence",
+              "security": "Never store sensitive tokens in localStorage for XSS protection"
+            },
+            "worker_communication": {
+              "pattern": "All /api/* routes go to Worker first due to run_worker_first config",
+              "cors": "Cloudflare Workers handle CORS automatically for same-origin requests",
+              "headers": "Include X-API-Key or Authorization: Bearer <token> in all requests"
+            },
+            "best_practices": [
+              "Use TanStack Query for all server state - built-in caching, retries, deduplication",
+              "Implement request deduplication to prevent duplicate API calls",
+              "Use TanStack Query's staleTime and cacheTime for optimal caching",
+              "Handle 401 errors globally to trigger re-authentication",
+              "Implement exponential backoff for retries on network errors"
+            ]
+          },
+          "shadcn_implementation": {
+            "toast_for_errors": "Use sonner (Sonner toast) component for displaying API errors",
+            "form_integration": "Use shadcn form component with react-hook-form for API mutations",
+            "loading_states": "Use skeleton component for loading states while fetching",
+            "best_practices": [
+              "Create custom hooks that combine TanStack Query with shadcn components",
+              "Use toast.error() for API errors, toast.success() for successful mutations",
+              "Show skeleton components during initial load, spinners for subsequent fetches"
+            ]
+          },
           "sub_tasks": [
-            {"id": "SUB-103-1", "status": "To Do", "description": "Create an `api.ts` file with a configured fetch instance."},
-            {"id": "SUB-103-2", "status": "To Do", "description": "Install and create a `useUserStore.ts` with Zustand."},
-            {"id": "SUB-103-3", "status": "To Do", "description": "Install TanStack Query and wrap the app in `QueryClientProvider`."}
+            {"id": "SUB-103-1", "status": "To Do", "description": "Create `src/lib/api.ts` with configured fetch instance and auth headers"},
+            {"id": "SUB-103-2", "status": "To Do", "description": "Install and create `src/stores/useAuthStore.ts` with Zustand for auth state"},
+            {"id": "SUB-103-3", "status": "To Do", "description": "Install TanStack Query and wrap app in QueryClientProvider"},
+            {"id": "SUB-103-4", "status": "To Do", "description": "Create authentication hooks: useLogin, useLogout, useCurrentUser"},
+            {"id": "SUB-103-5", "status": "To Do", "description": "Implement token refresh logic and 401 error handling"},
+            {"id": "SUB-103-6", "status": "To Do", "description": "Set up global error toast using sonner"}
+          ]
+        },
+        {
+          "id": "TASK-104",
+          "name": "Implement React Router and App Shell",
+          "description": "Set up client-side routing with React Router v6, create app shell with navigation, and implement route-based code splitting.",
+          "success_criteria": "All routes are defined and navigable. Route transitions are smooth. Code is split by route. Navigation component shows active states.",
+          "unit_tests": [
+            "Test that all routes render correct components",
+            "Test navigation between routes",
+            "Test that lazy-loaded routes work",
+            "Test 404 handling"
+          ],
+          "cloudflare_implementation": {
+            "routing_mode": "BrowserRouter (client-side only, no SSR)",
+            "code_splitting": "Use React.lazy() for route-based code splitting - Vite handles chunking automatically",
+            "asset_handling": "Static assets are cached by Cloudflare CDN automatically",
+            "best_practices": [
+              "Use React.lazy() and Suspense for route-based code splitting",
+              "Prefetch likely next routes with <link rel='prefetch'>",
+              "Keep route components small - defer heavy components to lazy load",
+              "Use ErrorBoundary for route-level error handling"
+            ]
+          },
+          "shadcn_implementation": {
+            "navigation_components": [
+              "navigation-menu - Main app navigation",
+              "tabs - For tabbed route sections",
+              "breadcrumb - For navigation hierarchy",
+              "sidebar - For desktop navigation drawer"
+            ],
+            "mobile_navigation": "Use sheet component for mobile menu drawer",
+            "best_practices": [
+              "Use navigation-menu for desktop nav, sheet for mobile",
+              "Show active route with different styling (aria-current='page')",
+              "Use skeleton during route transitions with Suspense"
+            ]
+          },
+          "sub_tasks": [
+            {"id": "SUB-104-1", "status": "To Do", "description": "Install react-router-dom v6"},
+            {"id": "SUB-104-2", "status": "To Do", "description": "Create route configuration with lazy-loaded components"},
+            {"id": "SUB-104-3", "status": "To Do", "description": "Build app shell with header, nav, and main content area"},
+            {"id": "SUB-104-4", "status": "To Do", "description": "Implement desktop navigation with shadcn navigation-menu"},
+            {"id": "SUB-104-5", "status": "To Do", "description": "Implement mobile navigation with shadcn sheet"},
+            {"id": "SUB-104-6", "status": "To Do", "description": "Add loading states with Suspense and skeleton"}
           ]
         }
       ]
@@ -69,39 +251,103 @@
         {
           "id": "TASK-201",
           "name": "Build 'My Kitchen' Appliance List UI",
-          "description": "Create the main page for viewing, adding, and deleting kitchen appliances.",
-          "success_criteria": "Users can see a list of their appliances fetched from the backend. A form is available to add a new appliance.",
+          "description": "Create the main page for viewing, adding, and deleting kitchen appliances with PDF manual upload support.",
+          "success_criteria": "Users can see a list of their appliances. A form allows adding new appliances with manual upload. Upload progress is shown. Delete works with confirmation.",
           "unit_tests": [
-            "Test that the appliance list renders correctly with mock data.",
-            "Test the 'Add Appliance' form validation."
+            "Test that the appliance list renders correctly with mock data",
+            "Test the 'Add Appliance' form validation",
+            "Test file upload with progress tracking",
+            "Test delete confirmation dialog"
           ],
-          "mcp_queries": [
-            "cloudflare-docs: How to handle multipart/form-data uploads from a React form without a full page refresh.",
-            "cloudflare-docs: Using TanStack Query for optimistic updates when deleting an item from a list."
-          ],
+          "cloudflare_implementation": {
+            "multipart_upload": {
+              "endpoint": "POST /api/kitchen/appliances",
+              "format": "multipart/form-data with fields: brand, model, manual (file)",
+              "file_handling": "Frontend converts File to FormData, backend stores in R2 bucket",
+              "max_size": "Workers have 100MB request size limit - enforce client-side validation"
+            },
+            "r2_storage": "Manuals are stored in R2 bucket, extractedText and embeddings stored in database",
+            "best_practices": [
+              "Use FormData API for multipart uploads",
+              "Show upload progress using xhr.upload.onprogress or fetch with ReadableStream",
+              "Validate file type (application/pdf) and size before upload",
+              "Use TanStack Query mutation for upload with onProgress callback",
+              "Handle large files by showing progress bar"
+            ]
+          },
+          "shadcn_implementation": {
+            "components_used": [
+              "card - For each appliance in grid",
+              "dialog - For add appliance form",
+              "form - Form handling with validation",
+              "input - Text inputs for brand/model",
+              "button - Submit and action buttons",
+              "progress - Upload progress bar",
+              "alert-dialog - Delete confirmation",
+              "badge - Status indicators (processing, ready, error)",
+              "spinner - Loading states"
+            ],
+            "file_upload_pattern": "Use hidden input type='file' with custom button UI. Show file name and size after selection. Use progress component during upload.",
+            "best_practices": [
+              "Use react-hook-form with zod for form validation",
+              "Show clear file size limits and accepted formats",
+              "Provide visual feedback during upload (progress, spinner)",
+              "Use alert-dialog for destructive actions like delete",
+              "Display badges for appliance status (pending, processing, ready, error)"
+            ]
+          },
           "sub_tasks": [
-            {"id": "SUB-201-1", "status": "To Do", "description": "Create a `useAppliances` custom hook using TanStack Query to fetch from `GET /api/kitchen/appliances`."},
-            {"id": "SUB-201-2", "status": "To Do", "description": "Build the appliance card component using shadcn/ui Card."},
-            {"id": "SUB-201-3", "status": "To Do", "description": "Implement the 'Add Appliance' form within a shadcn/ui Dialog component."},
-            {"id": "SUB-201-4", "status": "To Do", "description": "Implement the delete functionality with a confirmation dialog."}
+            {"id": "SUB-201-1", "status": "To Do", "description": "Create useAppliances hook using TanStack Query (GET /api/kitchen/appliances)"},
+            {"id": "SUB-201-2", "status": "To Do", "description": "Build ApplianceCard component using shadcn card"},
+            {"id": "SUB-201-3", "status": "To Do", "description": "Build AddApplianceDialog with file upload using shadcn dialog + form"},
+            {"id": "SUB-201-4", "status": "To Do", "description": "Implement file upload with FormData and progress tracking"},
+            {"id": "SUB-201-5", "status": "To Do", "description": "Implement delete with confirmation using alert-dialog"},
+            {"id": "SUB-201-6", "status": "To Do", "description": "Add upload progress bar using shadcn progress component"}
           ]
         },
         {
           "id": "TASK-202",
-          "name": "Implement Asynchronous Manual Processing UI",
-          "description": "Handle the asynchronous nature of appliance manual processing. This involves polling for status updates and reflecting the state in the UI.",
-          "success_criteria": "When a user uploads a manual, the UI shows a 'Processing' state. The UI updates automatically to 'Completed' or 'Failed' without a page refresh.",
+          "name": "Implement Asynchronous Manual Processing UI with Polling",
+          "description": "Handle the asynchronous processing of appliance manuals with status polling. Show processing states and update UI automatically.",
+          "success_criteria": "After upload, UI shows 'Processing' state. Status updates automatically without page refresh. UI transitions to 'Completed' or 'Failed' states. Error messages are clear.",
           "unit_tests": [
-            "Mock the status endpoint and test that the UI correctly transitions through `QUEUED`, `PROCESSING`, and `COMPLETED` states."
+            "Mock status endpoint and test UI transitions through QUEUED, PROCESSING, COMPLETED",
+            "Test polling starts after upload and stops when complete",
+            "Test error state handling",
+            "Test that multiple appliances can process simultaneously"
           ],
-          "mcp_queries": [
-            "cloudflare-docs: How to implement polling with TanStack Query's `refetchInterval`.",
-            "cloudflare-docs: Best practices for displaying asynchronous job statuses to users in React."
-          ],
+          "cloudflare_implementation": {
+            "status_endpoint": "GET /api/kitchen/appliances/:id with processing status",
+            "polling_strategy": "Use TanStack Query's refetchInterval for automatic polling",
+            "best_practices": [
+              "Set refetchInterval based on status (fast while processing, stop when complete)",
+              "Use refetchInterval conditionally: only poll when status is QUEUED or PROCESSING",
+              "Disable polling when tab is not visible to save resources",
+              "Maximum polling duration to prevent infinite loops",
+              "Show estimated time remaining if available from backend"
+            ],
+            "status_states": "QUEUED → PROCESSING → COMPLETED or FAILED"
+          },
+          "shadcn_implementation": {
+            "status_display": [
+              "badge - Show current status (Processing, Ready, Error)",
+              "progress - For processing progress if percentage available",
+              "spinner - Animated loading during processing",
+              "alert - For error states with retry option"
+            ],
+            "best_practices": [
+              "Use badge with different variants for different states",
+              "Show spinner + progress together for best UX",
+              "Provide retry button in error state",
+              "Use toast to notify when processing completes in background"
+            ]
+          },
           "sub_tasks": [
-            {"id": "SUB-202-1", "status": "To Do", "description": "When the `POST /api/kitchen/appliances` call succeeds, trigger a new TanStack Query to poll `GET /api/kitchen/appliances/:id/status`."},
-            {"id": "SUB-202-2", "status": "To Do", "description": "Disable polling when the status is 'COMPLETED' or 'FAILED'."},
-            {"id": "SUB-202-3", "status": "To Do", "description": "Display a spinner or progress bar on the appliance card while processing."}
+            {"id": "SUB-202-1", "status": "To Do", "description": "Create useApplianceStatus hook with refetchInterval polling"},
+            {"id": "SUB-202-2", "status": "To Do", "description": "Implement conditional polling (only when status is QUEUED/PROCESSING)"},
+            {"id": "SUB-202-3", "status": "To Do", "description": "Add status badges and spinner to ApplianceCard"},
+            {"id": "SUB-202-4", "status": "To Do", "description": "Show toast notification when processing completes"},
+            {"id": "SUB-202-5", "status": "To Do", "description": "Handle error states with retry option"}
           ]
         }
       ]
@@ -112,41 +358,126 @@
       "tasks": [
         {
           "id": "TASK-301",
-          "name": "Build Multi-Modal Chat Interface",
-          "description": "Create the core chat component that supports text, voice, and image inputs.",
-          "success_criteria": "A user can type a message, record a voice memo, or upload an image. The inputs are correctly sent to the respective backend APIs.",
+          "name": "Build Multi-Modal Chat Interface with Streaming",
+          "description": "Create chat component supporting text, voice, and image inputs with streaming AI responses using Server-Sent Events.",
+          "success_criteria": "Users can type messages, record voice, upload images. AI responses stream in real-time. Chat history is maintained. UI is responsive and accessible.",
           "unit_tests": [
-            "Test the microphone recording logic using browser mocks.",
-            "Test image file selection and conversion to a format suitable for the API."
+            "Test text message sending and receiving",
+            "Test voice recording using mocked MediaRecorder",
+            "Test image upload and preview",
+            "Test SSE streaming message display",
+            "Test chat history persistence"
           ],
-          "mcp_queries": [
-            "cloudflare-docs: Using the Web Audio API (`MediaRecorder`) in React to capture and upload audio.",
-            "cloudflare-docs: How to read an image file as a Blob or base64 string in a React component."
-          ],
+          "cloudflare_implementation": {
+            "streaming_api": {
+              "endpoint": "POST /api/chat with streaming response",
+              "format": "Server-Sent Events (text/event-stream)",
+              "client_handling": "Use EventSource or fetch with ReadableStream to process SSE",
+              "message_format": "data: {content, done} newline-separated events"
+            },
+            "voice_transcription": {
+              "endpoint": "POST /api/transcribe with multipart audio file",
+              "format": "FormData with 'file' field containing audio blob",
+              "supported_formats": "webm, mp4, wav (browser-dependent)",
+              "client_recording": "Use MediaRecorder API to capture audio, send blob to API"
+            },
+            "image_ingestion": {
+              "endpoint": "POST /api/ingest/image with multipart image files",
+              "format": "FormData with 'file' field (supports multiple)",
+              "max_size": "Validate file size before upload (suggest 10MB limit)",
+              "processing": "Backend uses OCR/vision models to extract recipe info"
+            },
+            "best_practices": [
+              "Use fetch with ReadableStream for SSE instead of EventSource for better control",
+              "Buffer streamed tokens and render in batches for smoother UX",
+              "Show typing indicator while waiting for first token",
+              "Handle stream errors and reconnection gracefully",
+              "Store chat history in IndexedDB for persistence across sessions",
+              "Implement auto-scroll to newest message during streaming"
+            ]
+          },
+          "shadcn_implementation": {
+            "chat_components": [
+              "card - Message bubbles for user and AI",
+              "input - Text input for messages",
+              "button - Send, voice record, image upload buttons",
+              "dialog - Image preview dialog",
+              "scroll-area - Chat message container",
+              "avatar - User and AI avatars",
+              "separator - Message date separators",
+              "skeleton - Loading states for AI response"
+            ],
+            "voice_recording_ui": "Show waveform animation or timer while recording. Use button with loading state during transcription.",
+            "image_upload_ui": "Show image thumbnail after selection. Display multiple images in grid if batch upload.",
+            "streaming_display": "Render AI response in real-time as tokens arrive. Use cursor blink effect at end of streaming text.",
+            "best_practices": [
+              "Use scroll-area for chat history with auto-scroll to bottom",
+              "Distinguish user vs AI messages with different card styles",
+              "Show timestamp for each message",
+              "Use skeleton for AI response placeholder before stream starts",
+              "Provide visual feedback for voice recording (pulsing mic icon)",
+              "Show image thumbnails with click to enlarge in dialog"
+            ]
+          },
           "sub_tasks": [
-            {"id": "SUB-301-1", "status": "To Do", "description": "Build the chat input component with buttons for voice and image upload."},
-            {"id": "SUB-301-2", "status": "To Do", "description": "Implement the voice recording logic using `MediaRecorder` and the `/api/transcribe` endpoint."},
-            {"id": "SUB-301-3", "status": "To Do", "description": "Implement the image upload logic for the `/api/ingest/image` endpoint."}
+            {"id": "SUB-301-1", "status": "To Do", "description": "Build chat message UI with user/AI message bubbles using cards"},
+            {"id": "SUB-301-2", "status": "To Do", "description": "Implement text input with send button"},
+            {"id": "SUB-301-3", "status": "To Do", "description": "Implement voice recording with MediaRecorder API"},
+            {"id": "SUB-301-4", "status": "To Do", "description": "Implement image upload with preview"},
+            {"id": "SUB-301-5", "status": "To Do", "description": "Implement SSE streaming response display"},
+            {"id": "SUB-301-6", "status": "To Do", "description": "Add chat history persistence with IndexedDB"},
+            {"id": "SUB-301-7", "status": "To Do", "description": "Implement auto-scroll during streaming"}
           ]
         },
         {
           "id": "TASK-302",
-          "name": "Implement Generative Recipe Card UI",
-          "description": "Develop a system to parse AI responses and dynamically render interactive recipe cards within the chat history.",
-          "success_criteria": "When the AI responds with a recipe, a rich card is displayed instead of plain text. Ingredient items have 'Add to List' buttons that work.",
+          "name": "Implement Generative Recipe Card UI in Chat",
+          "description": "Parse AI responses and dynamically render interactive recipe cards within the chat. Support contextual actions on ingredients and recipes.",
+          "success_criteria": "AI responses containing recipes render as rich cards. Ingredients have 'Add to List' buttons. Recipe cards have 'View Full Recipe' links. Markdown is rendered properly.",
           "unit_tests": [
-            "Test the parser with various mock AI responses to ensure it correctly renders the recipe card.",
-            "Test the 'Add to List' button's interaction with the shopping list state."
+            "Test recipe data extraction from AI response",
+            "Test RecipeCard component rendering",
+            "Test 'Add to List' button interaction",
+            "Test markdown rendering in recipe steps",
+            "Test recipe card click navigation"
           ],
-          "mcp_queries": [
-            "cloudflare-docs: How to render Markdown securely in React using a library like `react-markdown`.",
-            "cloudflare-docs: Strategies for building a generative UI system in React where components are chosen based on API data."
-          ],
+          "cloudflare_implementation": {
+            "response_format": "Backend returns structured JSON when recipe found: {type: 'recipe', data: {...}}",
+            "best_practices": [
+              "Parse AI response to detect recipe data structure",
+              "Use TanStack Query mutation for 'Add to List' actions",
+              "Optimistically update UI when adding ingredients",
+              "Handle partial recipe data gracefully"
+            ]
+          },
+          "shadcn_implementation": {
+            "recipe_card_components": [
+              "card - Main recipe card container",
+              "card-header - Recipe title and image",
+              "card-content - Ingredients and steps",
+              "card-footer - Action buttons",
+              "badge - Tags for cuisine, diet, etc.",
+              "button - View full recipe, save, share",
+              "accordion - For collapsible ingredient sections",
+              "checkbox - For ingredient checklist"
+            ],
+            "markdown_rendering": "Use react-markdown library for rendering recipe instructions with proper formatting",
+            "best_practices": [
+              "Make recipe cards visually distinct from regular messages",
+              "Show recipe hero image if available",
+              "Group ingredients by prep phase in accordions",
+              "Provide quick actions: View Full, Save, Add Ingredients",
+              "Use badges for dietary tags and cuisine type",
+              "Make entire card clickable to view full recipe"
+            ]
+          },
           "sub_tasks": [
-            {"id": "SUB-302-1", "status": "To Do", "description": "Create a `RecipeCard` component that accepts a recipe object and renders it beautifully."},
-            {"id": "SUB-302-2", "status": "To Do", "description": "In the chat component, check if the AI response contains structured recipe data."},
-            {"id": "SUB-302-3", "status": "To Do", "description": "If recipe data is present, render the `RecipeCard` component instead of a plain text message."},
-            {"id": "SUB-302-4", "status": "To Do", "description": "Connect the 'Add to List' buttons to the shopping list state/API."}
+            {"id": "SUB-302-1", "status": "To Do", "description": "Create RecipeCard component with shadcn card"},
+            {"id": "SUB-302-2", "status": "To Do", "description": "Parse AI response to detect recipe data structure"},
+            {"id": "SUB-302-3", "status": "To Do", "description": "Conditionally render RecipeCard vs plain text message"},
+            {"id": "SUB-302-4", "status": "To Do", "description": "Implement 'Add Ingredients to List' with TanStack mutation"},
+            {"id": "SUB-302-5", "status": "To Do", "description": "Add markdown rendering for recipe steps using react-markdown"},
+            {"id": "SUB-302-6", "status": "To Do", "description": "Link recipe cards to full recipe detail page"}
           ]
         }
       ]
@@ -157,44 +488,681 @@
       "tasks": [
         {
           "id": "TASK-401",
-          "name": "Develop Phased Prep and Flowchart UI",
-          "description": "On the recipe detail page, implement the UI for displaying phased ingredient prep lists and the Mermaid.js cooking flowchart.",
-          "success_criteria": "The recipe page correctly fetches and displays ingredients grouped by prep phase. A Mermaid diagram is rendered from the API response.",
+          "name": "Develop Recipe Detail Page with Phased Prep and Flowchart",
+          "description": "Build comprehensive recipe detail page with phased ingredient prep, Mermaid flowchart visualization, and all recipe metadata.",
+          "success_criteria": "Recipe page displays all metadata. Ingredients are grouped by prep phase in accordions. Mermaid flowchart renders correctly. Page is responsive and print-friendly.",
           "unit_tests": [
-            "Test that the Accordion component correctly displays phased ingredients from mock data.",
-            "Test that the Mermaid component renders a valid graph from a mock API string."
+            "Test recipe data fetching and display",
+            "Test accordion component for phased ingredients",
+            "Test Mermaid diagram rendering",
+            "Test recipe scaling calculations",
+            "Test print view generation"
           ],
-          "mcp_queries": [
-            "cloudflare-docs: How to integrate and render Mermaid.js diagrams in a React application.",
-            "cloudflare-docs: Using shadcn/ui Accordion component to create collapsible sections."
-          ],
+          "cloudflare_implementation": {
+            "recipe_endpoint": "GET /api/recipes/:id returns full recipe object",
+            "flowchart_endpoint": "GET /api/recipes/:id/flowchart returns Mermaid diagram string",
+            "best_practices": [
+              "Use parallel queries to fetch recipe and flowchart simultaneously",
+              "Cache recipe data aggressively with TanStack Query (staleTime: 5 minutes)",
+              "Prefetch recipe when hovering over recipe cards on list pages",
+              "Use Suspense boundaries for progressive loading"
+            ]
+          },
+          "shadcn_implementation": {
+            "recipe_detail_components": [
+              "card - Main recipe container",
+              "accordion - Phased ingredient sections",
+              "tabs - For switching between views (ingredients, steps, flowchart)",
+              "badge - Tags, difficulty, dietary info",
+              "button - Print, save, share, scale, adapt",
+              "separator - Section dividers",
+              "dialog - For scaling servings",
+              "checkbox - Ingredient checklist"
+            ],
+            "mermaid_integration": {
+              "library": "mermaid",
+              "component": "Create MermaidDiagram component that renders Mermaid string",
+              "initialization": "Call mermaid.initialize() once on mount",
+              "rendering": "Use ref to render diagram into DOM element",
+              "theming": "Use Mermaid themes that match app's light/dark mode"
+            },
+            "best_practices": [
+              "Use tabs to organize ingredients, steps, and flowchart",
+              "Make ingredient accordions with clear phase labels",
+              "Show flowchart in dialog or dedicated tab for better viewing",
+              "Provide print-optimized CSS using @media print",
+              "Use sticky header for recipe title on scroll",
+              "Show cooking time and difficulty prominently"
+            ]
+          },
           "sub_tasks": [
-            {"id": "SUB-401-1", "status": "To Do", "description": "Update the `useRecipe` hook to fetch data from `GET /api/recipes/:id`."},
-            {"id": "SUB-401-2", "status": "To Do", "description": "Create a component that renders the `prep_phases` data using Accordions."},
-            {"id": "SUB-401-3", "status": "To Do", "description": "Create a `Flowchart` component that fetches from `/api/recipes/:id/flowchart` and renders the diagram using the Mermaid library."}
+            {"id": "SUB-401-1", "status": "To Do", "description": "Create useRecipe hook to fetch GET /api/recipes/:id"},
+            {"id": "SUB-401-2", "status": "To Do", "description": "Build recipe header with title, image, metadata"},
+            {"id": "SUB-401-3", "status": "To Do", "description": "Implement phased prep accordion component"},
+            {"id": "SUB-401-4", "status": "To Do", "description": "Create MermaidDiagram component for flowchart"},
+            {"id": "SUB-401-5", "status": "To Do", "description": "Fetch and render flowchart from /api/recipes/:id/flowchart"},
+            {"id": "SUB-401-6", "status": "To Do", "description": "Add print styles and print button"},
+            {"id": "SUB-401-7", "status": "To Do", "description": "Implement recipe scaling dialog"}
           ]
         },
         {
           "id": "TASK-402",
           "name": "Implement Appliance Adaptation Feature",
-          "description": "Allow users to select one of their registered appliances and see a tailored version of the recipe instructions.",
-          "success_criteria": "A button on the recipe page, 'Adapt for My Appliance', opens a dialog for the user to choose an appliance. The adapted steps are then displayed clearly.",
+          "description": "Allow users to select a registered appliance and view tailored recipe instructions specific to that appliance.",
+          "success_criteria": "Adapt button appears when user has appliances. Dialog shows appliance list. Adapted instructions display clearly. Original vs adapted steps are distinguishable.",
           "unit_tests": [
-            "Test that the `POST /api/recipes/:id/adapt` API is called with the correct recipe and appliance IDs.",
-            "Test that the UI correctly displays the new, tailored steps."
+            "Test that adapt button only shows when appliances exist",
+            "Test appliance selection dialog",
+            "Test POST /api/recipes/:id/tailor API call",
+            "Test adapted steps display",
+            "Test handling of 404/409 errors"
           ],
-          "mcp_queries": [
-            "cloudflare-docs: How to display a 'diff' or comparison between two sets of text in React.",
-            "cloudflare-docs: Using shadcn/ui Dialog and Select components to create a selection flow."
-          ],
+          "cloudflare_implementation": {
+            "adaptation_endpoint": "POST /api/recipes/:id/tailor with body: {appliance_id}",
+            "response": "Returns {tailored_steps: string[]} with appliance-specific instructions",
+            "error_handling": {
+              "404": "Recipe or appliance not found - show error toast",
+              "409": "Appliance manual not processed - show processing status"
+            },
+            "best_practices": [
+              "Check appliance processing status before allowing adaptation",
+              "Cache adapted recipes per appliance using TanStack Query",
+              "Show loading state during adaptation (can take a few seconds)",
+              "Handle errors gracefully with actionable messages"
+            ]
+          },
+          "shadcn_implementation": {
+            "adaptation_ui": [
+              "button - 'Adapt for My Appliance' trigger",
+              "dialog - Appliance selection dialog",
+              "select - Dropdown for appliance selection",
+              "card - Display adapted steps in distinct card",
+              "tabs - Toggle between original and adapted instructions",
+              "badge - Indicator showing which appliance adaptation is for"
+            ],
+            "comparison_view": "Use tabs or side-by-side cards to show original vs adapted instructions",
+            "best_practices": [
+              "Only show adapt button if user has registered appliances",
+              "Use select component for choosing appliance",
+              "Show appliance name and model in adapted view",
+              "Provide 'Reset to Original' option",
+              "Use different styling to distinguish adapted steps",
+              "Show both original and adapted for easy comparison"
+            ]
+          },
           "sub_tasks": [
-            {"id": "SUB-402-1", "status": "To Do", "description": "Add a button to the recipe page that is only visible if the user has registered appliances."},
-            {"id": "SUB-402-2", "status": "To Do", "description": "Create a dialog that lists the user's appliances from the `useAppliances` hook."},
-            {"id": "SUB-402-3", "status": "To Do", "description": "On selection, call the `/api/recipes/:id/adapt` endpoint and display the results."},
-            {"id": "SUB-402-4", "status": "To Do", "description": "Consider using a Tab or side-by-side view to compare original vs. adapted steps."}
+            {"id": "SUB-402-1", "status": "To Do", "description": "Add 'Adapt for My Appliance' button to recipe page"},
+            {"id": "SUB-402-2", "status": "To Do", "description": "Create appliance selection dialog with select component"},
+            {"id": "SUB-402-3", "status": "To Do", "description": "Implement useRecipeAdaptation hook calling POST /api/recipes/:id/tailor"},
+            {"id": "SUB-402-4", "status": "To Do", "description": "Display adapted steps in tabs or side-by-side view"},
+            {"id": "SUB-402-5", "status": "To Do", "description": "Handle 409 errors for unprocessed appliances"},
+            {"id": "SUB-402-6", "status": "To Do", "description": "Add reset button to return to original instructions"}
+          ]
+        },
+        {
+          "id": "TASK-403",
+          "name": "Implement Favorites, Rating, and Recipe Actions",
+          "description": "Add ability to favorite recipes, rate them, and perform other recipe actions (share, print, etc.).",
+          "success_criteria": "Users can toggle favorite status. Rating UI allows 1-5 stars with optional notes. Share generates link. Print opens print-friendly view.",
+          "unit_tests": [
+            "Test favorite toggle with optimistic updates",
+            "Test rating submission",
+            "Test share link generation",
+            "Test print functionality"
+          ],
+          "cloudflare_implementation": {
+            "favorite_endpoints": {
+              "add": "POST /api/favorites/:id",
+              "remove": "DELETE /api/favorites/:id"
+            },
+            "rating_endpoints": {
+              "get": "GET /api/recipes/:id/rating",
+              "submit": "POST /api/recipes/:id/rating with {stars, notes?, cooked_at?}"
+            },
+            "print_endpoint": "GET /api/recipes/:id/print?format=html returns print-optimized HTML",
+            "best_practices": [
+              "Use optimistic updates for favorite toggle",
+              "Show visual feedback immediately on favorite click",
+              "Cache rating after submission",
+              "Generate print view on client-side when possible"
+            ]
+          },
+          "shadcn_implementation": {
+            "action_components": [
+              "button - Favorite heart icon, print, share",
+              "dialog - Rating dialog with stars and notes",
+              "textarea - Notes field in rating dialog",
+              "toast - Success confirmation for actions",
+              "popover - Share options menu"
+            ],
+            "rating_ui": "Use star icons (filled/empty) for visual rating. Allow click on stars to rate. Show current average rating if available.",
+            "best_practices": [
+              "Use heart icon for favorites with filled/outlined states",
+              "Provide visual feedback on favorite toggle",
+              "Use dialog for rating with clear submit/cancel",
+              "Show toast confirmations for successful actions",
+              "Use popover for share options (copy link, email, etc.)"
+            ]
+          },
+          "sub_tasks": [
+            {"id": "SUB-403-1", "status": "To Do", "description": "Add favorite toggle button with heart icon"},
+            {"id": "SUB-403-2", "status": "To Do", "description": "Implement useFavorite hook with optimistic updates"},
+            {"id": "SUB-403-3", "status": "To Do", "description": "Create rating dialog with star selection"},
+            {"id": "SUB-403-4", "status": "To Do", "description": "Implement useRating hook for submit and fetch"},
+            {"id": "SUB-403-5", "status": "To Do", "description": "Add share button with link copy functionality"},
+            {"id": "SUB-403-6", "status": "To Do", "description": "Implement print view with optimized CSS"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EPIC-5",
+      "name": "Pantry & Shopping List Management",
+      "tasks": [
+        {
+          "id": "TASK-501",
+          "name": "Build Pantry Management Interface",
+          "description": "Create UI for viewing, adding, editing, and deleting pantry items. Support bulk entry and categorization.",
+          "success_criteria": "Users can view all pantry items. Quick add works with autocomplete. Bulk entry pastes multiple items. Items can be edited and deleted. Categories auto-assign.",
+          "unit_tests": [
+            "Test pantry list rendering",
+            "Test add item with autocomplete",
+            "Test bulk entry parsing",
+            "Test edit and delete operations",
+            "Test category assignment"
+          ],
+          "cloudflare_implementation": {
+            "pantry_endpoints": {
+              "list": "GET /api/pantry returns all items",
+              "create": "POST /api/pantry with {ingredientName, quantity?, unit?}",
+              "update": "PUT /api/pantry/:id with same fields",
+              "delete": "DELETE /api/pantry/:id"
+            },
+            "best_practices": [
+              "Use TanStack Query for CRUD operations with cache invalidation",
+              "Implement optimistic updates for add/edit/delete",
+              "Debounce autocomplete searches",
+              "Validate quantity and unit formats"
+            ]
+          },
+          "shadcn_implementation": {
+            "pantry_components": [
+              "table - Pantry items list",
+              "input - Quick add and search",
+              "dialog - Bulk entry and edit dialogs",
+              "button - Add, edit, delete actions",
+              "badge - Category labels",
+              "select - Category and unit selectors",
+              "textarea - Bulk entry field",
+              "command - Autocomplete for ingredient search"
+            ],
+            "best_practices": [
+              "Use table for desktop, card list for mobile",
+              "Provide command component for autocomplete search",
+              "Use dialog for bulk entry with clear instructions",
+              "Show badge for categories with color coding",
+              "Use inline editing for quick quantity updates"
+            ]
+          },
+          "sub_tasks": [
+            {"id": "SUB-501-1", "status": "To Do", "description": "Create usePantry hooks for CRUD operations"},
+            {"id": "SUB-501-2", "status": "To Do", "description": "Build pantry table/list with edit and delete actions"},
+            {"id": "SUB-501-3", "status": "To Do", "description": "Implement quick add with autocomplete using command"},
+            {"id": "SUB-501-4", "status": "To Do", "description": "Create bulk entry dialog with textarea"},
+            {"id": "SUB-501-5", "status": "To Do", "description": "Implement category auto-assignment logic"},
+            {"id": "SUB-501-6", "status": "To Do", "description": "Add search and filter functionality"}
+          ]
+        },
+        {
+          "id": "TASK-502",
+          "name": "Implement Smart Shopping List Generation",
+          "description": "Generate shopping lists from menu plans with pantry-aware deduplication and category organization.",
+          "success_criteria": "Shopping list generated from menu excludes pantry items. Items grouped by category. Users can check off items. Manual items can be added. List persists offline.",
+          "unit_tests": [
+            "Test shopping list generation from menu",
+            "Test pantry deduplication",
+            "Test category grouping",
+            "Test check-off functionality",
+            "Test offline persistence"
+          ],
+          "cloudflare_implementation": {
+            "shopping_list_endpoint": "POST /api/menus/:id/shopping-list returns {shoppingList: [{category, items[]}]}",
+            "deduplication": "Backend automatically excludes items in user's pantry",
+            "best_practices": [
+              "Cache generated shopping lists locally",
+              "Sync check-off state to backend periodically",
+              "Support offline mode with IndexedDB",
+              "Allow regeneration if menu or pantry changes"
+            ]
+          },
+          "shadcn_implementation": {
+            "shopping_list_components": [
+              "accordion - Categories as accordion sections",
+              "checkbox - Item check-off",
+              "card - Shopping list container",
+              "input - Manual item addition",
+              "button - Generate, clear, share list",
+              "badge - Item counts per category",
+              "separator - Visual dividers"
+            ],
+            "best_practices": [
+              "Use accordion for collapsible categories",
+              "Large touch targets for checkboxes",
+              "Show checked items with strikethrough",
+              "Provide visual feedback on check-off",
+              "Use badges to show item counts",
+              "Allow unchecking for mistakes"
+            ]
+          },
+          "sub_tasks": [
+            {"id": "SUB-502-1", "status": "To Do", "description": "Create useShoppingList hook calling POST /api/menus/:id/shopping-list"},
+            {"id": "SUB-502-2", "status": "To Do", "description": "Build shopping list UI with accordion for categories"},
+            {"id": "SUB-502-3", "status": "To Do", "description": "Implement check-off with checkboxes and strikethrough"},
+            {"id": "SUB-502-4", "status": "To Do", "description": "Add manual item addition"},
+            {"id": "SUB-502-5", "status": "To Do", "description": "Implement offline persistence with IndexedDB"},
+            {"id": "SUB-502-6", "status": "To Do", "description": "Add share and print functionality"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EPIC-6",
+      "name": "Menu Planning & Discovery",
+      "tasks": [
+        {
+          "id": "TASK-601",
+          "name": "Build Weekly Menu Planner Interface",
+          "description": "Create drag-and-drop weekly calendar for meal planning with AI-generated menu support.",
+          "success_criteria": "7-day calendar grid displays. Recipes can be dragged onto meal slots. AI generates full week menu. Menus can be saved and edited.",
+          "unit_tests": [
+            "Test calendar grid rendering",
+            "Test drag-and-drop functionality",
+            "Test AI menu generation",
+            "Test menu save and load",
+            "Test menu editing"
+          ],
+          "cloudflare_implementation": {
+            "menu_endpoints": {
+              "generate": "POST /api/menus/generate with {week_start?, theme?, excluded_recipe_ids?}",
+              "get": "GET /api/menus/:id",
+              "update": "PUT /api/menus/:id with {items: [{day, meal, recipe_id}]}"
+            },
+            "best_practices": [
+              "Use optimistic updates when adding recipes to calendar",
+              "Cache menu data with TanStack Query",
+              "Validate menu before save (no duplicate recipes, complete days, etc.)",
+              "Provide undo/redo for menu changes"
+            ]
+          },
+          "shadcn_implementation": {
+            "menu_planner_components": [
+              "calendar - Week view component (or custom grid)",
+              "card - Each meal slot in calendar",
+              "button - Generate menu, save, clear",
+              "dialog - Recipe picker for manual add",
+              "command - Search recipes to add",
+              "badge - Meal type indicators",
+              "select - Week selector, theme picker"
+            ],
+            "drag_drop": "Use @dnd-kit/core library for drag-and-drop. Create draggable recipe cards and droppable meal slots.",
+            "best_practices": [
+              "Use calendar or custom grid for week view",
+              "Visual feedback during drag operations",
+              "Allow recipes to be removed from slots",
+              "Show recipe thumbnails in calendar",
+              "Provide 'Generate Menu' shortcut for quick planning"
+            ]
+          },
+          "sub_tasks": [
+            {"id": "SUB-601-1", "status": "To Do", "description": "Build weekly calendar grid component"},
+            {"id": "SUB-601-2", "status": "To Do", "description": "Implement drag-and-drop with @dnd-kit"},
+            {"id": "SUB-601-3", "status": "To Do", "description": "Create useMenuGeneration hook calling POST /api/menus/generate"},
+            {"id": "SUB-601-4", "status": "To Do", "description": "Build recipe picker dialog with search"},
+            {"id": "SUB-601-5", "status": "To Do", "description": "Implement menu save and load functionality"},
+            {"id": "SUB-601-6", "status": "To Do", "description": "Add theme-based generation options"}
+          ]
+        },
+        {
+          "id": "TASK-602",
+          "name": "Implement Recipe Search and Discovery Page",
+          "description": "Build comprehensive search interface with filters, autocomplete, and smart suggestions.",
+          "success_criteria": "Search bar has autocomplete. Filters work (cuisine, tags, time, diet). Results display in grid. Sorting options available. Empty states are helpful.",
+          "unit_tests": [
+            "Test search with autocomplete",
+            "Test filter application",
+            "Test sort functionality",
+            "Test empty state rendering",
+            "Test pagination or infinite scroll"
+          ],
+          "cloudflare_implementation": {
+            "search_endpoints": {
+              "search": "GET /api/recipes with query params: q, tag, cuisine, limit",
+              "suggest": "GET /api/search/suggest?q=... for autocomplete"
+            },
+            "best_practices": [
+              "Debounce autocomplete searches (300ms)",
+              "Use TanStack Query with keepPreviousData for smooth pagination",
+              "Implement infinite scroll or pagination as appropriate",
+              "Cache search results aggressively"
+            ]
+          },
+          "shadcn_implementation": {
+            "search_components": [
+              "input - Search bar",
+              "command - Autocomplete dropdown",
+              "select - Filter dropdowns",
+              "badge - Active filter chips",
+              "button - Sort options, clear filters",
+              "card - Recipe result cards",
+              "skeleton - Loading states",
+              "empty - Empty state with suggestions"
+            ],
+            "best_practices": [
+              "Use command component for autocomplete",
+              "Show active filters as removable badges",
+              "Provide skeleton cards during loading",
+              "Use grid layout for recipe cards",
+              "Show helpful suggestions in empty state",
+              "Persist search filters in URL for sharing"
+            ]
+          },
+          "sub_tasks": [
+            {"id": "SUB-602-1", "status": "To Do", "description": "Build search bar with autocomplete using command"},
+            {"id": "SUB-602-2", "status": "To Do", "description": "Implement useRecipeSearch hook with filters"},
+            {"id": "SUB-602-3", "status": "To Do", "description": "Create filter controls with select components"},
+            {"id": "SUB-602-4", "status": "To Do", "description": "Build recipe result grid with cards"},
+            {"id": "SUB-602-5", "status": "To Do", "description": "Add sort options and pagination"},
+            {"id": "SUB-602-6", "status": "To Do", "description": "Create empty state component with suggestions"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EPIC-7",
+      "name": "PWA, Offline Support & Performance",
+      "tasks": [
+        {
+          "id": "TASK-701",
+          "name": "Implement Progressive Web App Features",
+          "description": "Add PWA capabilities: service worker, offline support, install prompt, app manifest.",
+          "success_criteria": "App works offline. Install prompt appears. App icon shows on home screen. Critical assets cached. Background sync works.",
+          "unit_tests": [
+            "Test service worker registration",
+            "Test offline functionality",
+            "Test install prompt",
+            "Test manifest configuration"
+          ],
+          "cloudflare_implementation": {
+            "static_assets": "Cloudflare automatically caches static assets via CDN",
+            "service_worker": {
+              "registration": "Register service worker in main.tsx",
+              "caching_strategy": "Cache-first for static assets, network-first for API calls",
+              "offline_fallback": "Serve cached HTML when offline"
+            },
+            "best_practices": [
+              "Use Workbox for service worker management",
+              "Implement background sync for offline actions",
+              "Cache recipe images and assets for offline viewing",
+              "Show offline indicator in UI when no connection",
+              "Queue API mutations when offline, sync when back online"
+            ]
+          },
+          "shadcn_implementation": {
+            "offline_ui": [
+              "toast - Offline/online status notifications",
+              "badge - Offline indicator in header",
+              "alert - Offline mode banner"
+            ],
+            "best_practices": [
+              "Show persistent offline indicator when no connection",
+              "Use toast to notify when connection is restored",
+              "Indicate which features work offline",
+              "Disable features that require connectivity"
+            ]
+          },
+          "sub_tasks": [
+            {"id": "SUB-701-1", "status": "To Do", "description": "Install and configure Workbox for service worker"},
+            {"id": "SUB-701-2", "status": "To Do", "description": "Create app manifest with icons and theme colors"},
+            {"id": "SUB-701-3", "status": "To Do", "description": "Implement caching strategies for assets and API"},
+            {"id": "SUB-701-4", "status": "To Do", "description": "Add install prompt component"},
+            {"id": "SUB-701-5", "status": "To Do", "description": "Implement background sync for queued actions"},
+            {"id": "SUB-701-6", "status": "To Do", "description": "Add offline indicator to UI"}
+          ]
+        },
+        {
+          "id": "TASK-702",
+          "name": "Performance Optimization & Code Splitting",
+          "description": "Optimize app performance with code splitting, lazy loading, image optimization, and prefetching.",
+          "success_criteria": "Core Web Vitals meet targets. Routes are code-split. Images are optimized. Lighthouse score >90. Initial load is fast.",
+          "unit_tests": [
+            "Measure Core Web Vitals",
+            "Test lazy loading of routes",
+            "Verify code splitting",
+            "Test image optimization"
+          ],
+          "cloudflare_implementation": {
+            "code_splitting": {
+              "method": "Use React.lazy() for route-based splitting",
+              "vite_config": "Vite automatically handles chunk optimization",
+              "manual_chunks": "Configure manual chunks in vite.config for large dependencies"
+            },
+            "image_optimization": {
+              "cloudflare_images": "Consider Cloudflare Images for automatic optimization",
+              "lazy_loading": "Use native loading='lazy' for images",
+              "webp": "Serve WebP with fallback to JPEG/PNG"
+            },
+            "prefetching": {
+              "dns_prefetch": "Add DNS prefetch for API domain",
+              "route_prefetch": "Prefetch likely next routes on hover",
+              "data_prefetch": "Use TanStack Query prefetchQuery for predictable navigation"
+            },
+            "best_practices": [
+              "Route-based code splitting with React.lazy",
+              "Lazy load heavy components (charts, Mermaid)",
+              "Use TanStack Query for request deduplication",
+              "Implement virtual scrolling for long lists",
+              "Optimize bundle size with tree-shaking",
+              "Monitor bundle size with vite-bundle-visualizer"
+            ]
+          },
+          "shadcn_implementation": {
+            "loading_components": [
+              "skeleton - Route loading states",
+              "spinner - Component loading states",
+              "progress - Long operations"
+            ],
+            "best_practices": [
+              "Show skeleton during Suspense boundaries",
+              "Use spinner for component-level loading",
+              "Provide instant feedback on user actions"
+            ]
+          },
+          "sub_tasks": [
+            {"id": "SUB-702-1", "status": "To Do", "description": "Implement route-based code splitting with React.lazy"},
+            {"id": "SUB-702-2", "status": "To Do", "description": "Lazy load heavy components (Mermaid, charts)"},
+            {"id": "SUB-702-3", "status": "To Do", "description": "Configure image lazy loading and optimization"},
+            {"id": "SUB-702-4", "status": "To Do", "description": "Add route prefetching on hover"},
+            {"id": "SUB-702-5", "status": "To Do", "description": "Implement virtual scrolling for recipe lists"},
+            {"id": "SUB-702-6", "status": "To Do", "description": "Run Lighthouse audits and optimize"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EPIC-8",
+      "name": "User Settings & Preferences",
+      "tasks": [
+        {
+          "id": "TASK-801",
+          "name": "Build User Settings and Profile Management",
+          "description": "Create comprehensive settings page for managing preferences, account, theme, and app behavior.",
+          "success_criteria": "Users can update dietary preferences, theme, units, notifications. Changes persist. Export data works. Delete account works.",
+          "unit_tests": [
+            "Test preference updates",
+            "Test theme toggle",
+            "Test unit conversion",
+            "Test data export"
+          ],
+          "cloudflare_implementation": {
+            "preferences_endpoints": {
+              "get": "GET /api/prefs?userId=...",
+              "update": "PUT /api/prefs with full preferences object"
+            },
+            "best_practices": [
+              "Use optimistic updates for preference changes",
+              "Validate preference data before save",
+              "Cache preferences for offline access",
+              "Sync preferences across devices"
+            ]
+          },
+          "shadcn_implementation": {
+            "settings_components": [
+              "tabs - Settings categories",
+              "card - Setting sections",
+              "switch - Toggle settings",
+              "select - Dropdown options",
+              "button - Save, reset, export, delete",
+              "form - Preference forms",
+              "alert-dialog - Destructive action confirmations",
+              "separator - Section dividers"
+            ],
+            "best_practices": [
+              "Use tabs for organizing settings categories",
+              "Group related settings in cards",
+              "Provide clear labels and descriptions",
+              "Show save confirmation with toast",
+              "Use alert-dialog for destructive actions",
+              "Implement undo for accidental changes"
+            ]
+          },
+          "sub_tasks": [
+            {"id": "SUB-801-1", "status": "To Do", "description": "Create settings page with tabs for categories"},
+            {"id": "SUB-801-2", "status": "To Do", "description": "Implement dietary preferences form"},
+            {"id": "SUB-801-3", "status": "To Do", "description": "Add theme toggle (light/dark mode)"},
+            {"id": "SUB-801-4", "status": "To Do", "description": "Implement unit system toggle (metric/imperial)"},
+            {"id": "SUB-801-5", "status": "To Do", "description": "Add data export functionality"},
+            {"id": "SUB-801-6", "status": "To Do", "description": "Implement account deletion with confirmation"}
           ]
         }
       ]
     }
-  ]
+  ],
+  "global_implementation_guidelines": {
+    "cloudflare_workers_best_practices": [
+      "Use wrangler.jsonc for configuration with comments",
+      "Set compatibility_date to latest stable date",
+      "Configure assets.not_found_handling = 'single-page-application' for React Router",
+      "Use run_worker_first for API routes: ['/api/*']",
+      "Leverage Cloudflare CDN caching for static assets automatically",
+      "Use bindings for KV, D1, R2 when needed (not in initial MVP)",
+      "Monitor Worker execution time (keep under 10ms for free tier)",
+      "Use streaming responses for chat and large data transfers",
+      "Implement proper CORS headers for API routes if needed",
+      "Use environment variables for secrets via wrangler",
+      "Deploy with `wrangler deploy` or CI/CD with GitHub Actions",
+      "Use Preview Deployments for PR reviews"
+    ],
+    "react_and_vite_best_practices": [
+      "Use TypeScript strict mode for type safety",
+      "Use React.lazy() for route-based code splitting",
+      "Implement Error Boundaries for graceful error handling",
+      "Use Suspense for loading states with fallback components",
+      "Keep components small and focused (Single Responsibility)",
+      "Use custom hooks for reusable logic",
+      "Implement proper key props for lists",
+      "Use React.memo() for expensive renders",
+      "Avoid prop drilling - use context or state management",
+      "Follow React Hooks rules (only call at top level)",
+      "Use useCallback and useMemo judiciously (not everywhere)",
+      "Implement proper cleanup in useEffect",
+      "Use Vite's environment variables (import.meta.env)"
+    ],
+    "tanstack_query_best_practices": [
+      "Use separate hooks for each API endpoint",
+      "Set appropriate staleTime based on data volatility",
+      "Use cacheTime to control memory usage",
+      "Implement optimistic updates for mutations",
+      "Use invalidateQueries after mutations",
+      "Use prefetchQuery for predictable navigation",
+      "Enable keepPreviousData for pagination",
+      "Use enabled option to conditionally fetch",
+      "Implement proper error handling with onError",
+      "Use queryKey arrays for cache management",
+      "Set refetchInterval conditionally for polling",
+      "Use retry and retryDelay for network resilience"
+    ],
+    "shadcn_best_practices": [
+      "Add components only when needed via CLI",
+      "Customize components after adding - they're yours",
+      "Use composition to create complex components",
+      "Follow accessibility guidelines (ARIA labels, keyboard nav)",
+      "Use CSS variables for theming",
+      "Implement dark mode support from the start",
+      "Keep component variants consistent across app",
+      "Use proper semantic HTML elements",
+      "Ensure color contrast meets WCAG AA standards",
+      "Test with keyboard navigation",
+      "Use proper focus indicators",
+      "Provide alternative text for images and icons"
+    ],
+    "accessibility_requirements": [
+      "All interactive elements must be keyboard accessible",
+      "Provide proper ARIA labels and roles",
+      "Ensure color contrast meets WCAG 2.1 AA standards (4.5:1)",
+      "Use semantic HTML elements (button, nav, main, etc.)",
+      "Provide alternative text for all images",
+      "Support browser text resizing",
+      "Ensure focus is visible and logical",
+      "Avoid keyboard traps",
+      "Use labels for form inputs",
+      "Provide error messages that are accessible",
+      "Test with screen readers (NVDA, JAWS, VoiceOver)",
+      "Support high contrast mode"
+    ],
+    "responsive_design_guidelines": [
+      "Mobile-first approach - design for mobile, enhance for desktop",
+      "Breakpoints: sm (640px), md (768px), lg (1024px), xl (1280px)",
+      "Touch targets minimum 44x44px",
+      "Use responsive Tailwind classes (sm:, md:, lg:, xl:)",
+      "Test on real devices, not just browser DevTools",
+      "Support both portrait and landscape orientations",
+      "Optimize images for different screen sizes",
+      "Use responsive typography (rem units)",
+      "Ensure content is readable without zoom",
+      "Avoid horizontal scrolling",
+      "Use responsive navigation patterns (hamburger menu for mobile)",
+      "Test with different viewport sizes"
+    ],
+    "security_and_privacy": [
+      "Use HTTPS for all communications",
+      "Implement proper authentication with JWT or sessions",
+      "Store tokens securely (memory + sessionStorage, not localStorage)",
+      "Sanitize user inputs to prevent XSS",
+      "Implement CSRF protection for mutations",
+      "Use Content Security Policy headers",
+      "Implement rate limiting for API endpoints",
+      "Follow principle of least privilege for data access",
+      "Encrypt sensitive data in transit and at rest",
+      "Implement proper CORS policies",
+      "Log security events for monitoring",
+      "Regular security audits and dependency updates",
+      "Comply with GDPR and privacy regulations",
+      "Provide privacy policy and terms of service",
+      "Allow users to export and delete their data"
+    ]
+  },
+  "testing_strategy": {
+    "unit_tests": "Vitest for unit tests of hooks, utilities, and components",
+    "integration_tests": "React Testing Library for component integration tests",
+    "e2e_tests": "Playwright for end-to-end user flow testing",
+    "coverage_target": "80% code coverage",
+    "ci_cd": "Run tests on every PR via GitHub Actions"
+  },
+  "deployment_strategy": {
+    "development": "npm run dev - local development with Cloudflare runtime",
+    "preview": "Cloudflare Pages Preview Deployments for PRs",
+    "production": "wrangler deploy or GitHub Actions deploy to Cloudflare Workers",
+    "rollback": "Use Wrangler rollback or redeploy previous version",
+    "monitoring": "Use Cloudflare Analytics and Workers Analytics"
+  }
 }
