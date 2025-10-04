@@ -31,11 +31,17 @@ This starts the application with `wrangler dev`, which serves the Vite developme
 
 The design system is built with shadcn/ui primitives and a shared token layer:
 
-- `src/components/ui` hosts the generated primitives.
+- `src/components/ui` hosts the generated primitives plus additional navigation and sheet patterns.
 - Composite widgets such as recipe summaries and ingredient readiness views live in `src/components/recipe-card.tsx` and `src/components/ingredient-list.tsx`.
 - Global CSS variables for color, typography, and spacing live in `src/index.css` and feed Tailwind via `tailwind.config.js`.
 - Dark mode is powered by [`next-themes`](https://github.com/pacocoursey/next-themes) with a `ThemeToggle` control in `src/components/theme-toggle.tsx`.
 - Toast notifications use the themed `sonner` integration in `src/components/ui/sonner.tsx`.
+
+## Routing & navigation
+
+- `src/App.tsx` defines route-based code splitting with React Router, loading feature areas on demand.
+- `src/components/layout/app-shell.tsx` renders the shared app chrome, desktop navigation menu, and mobile sheet navigation with TanStack Query route prefetching.
+- Individual route modules under `src/routes/` (chat, kitchen hub, recipes, planner) pull data via suspense-enabled hooks in `src/lib/routeData.ts` to showcase loading states and layout patterns.
 
 ## Authentication & data layer
 
@@ -44,7 +50,8 @@ The design system is built with shadcn/ui primitives and a shared token layer:
 - `src/stores/useAuthStore.ts` is a persisted Zustand store that keeps the current session, user profile, and helper selectors in sync across tabs via `sessionStorage`.
 - `src/hooks/useAuth.ts` exposes `useLogin`, `useLogout`, and `useCurrentUser` hooks that compose the API client, React Query, and the store to power UI flows.
 - `worker/index.ts` now includes mock `/api/auth/login`, `/api/auth/refresh`, and `/api/auth/me` endpoints so the frontend can simulate realistic auth cycles without a live backend.
-- `src/App.tsx` renders an `AuthPanel` showcasing login/logout flows, session refresh, and error handling on top of the existing design system showcase.
+- `src/components/auth-panel.tsx` exposes the authentication showcase panel used inside the kitchen hub route alongside the broader navigation shell.
+- `src/lib/routeData.ts` simulates feature data and powers TanStack Query prefetching so navigation feels responsive even before real APIs land.
 
 ## Project structure
 
@@ -68,7 +75,7 @@ The `wrangler.jsonc` file enables SPA routing and directs `/api/*` requests to t
 
 ## Next steps
 
-- Build the authenticated app shell and client-side routing (TASK-104)
-- Flesh out kitchen and recipe data endpoints in the Worker alongside React Query hooks
-- Add integration tests that exercise the mock auth workflow and error handling paths
+- Expand the Cloudflare Worker mocks with kitchen, recipe, and planner endpoints that align with the new routes.
+- Replace the placeholder `routeData` fetchers with real TanStack Query hooks that call the Worker.
+- Add integration tests covering navigation, login/logout, and token refresh flows across routes.
 
