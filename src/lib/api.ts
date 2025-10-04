@@ -117,14 +117,9 @@ async function request<T>(path: string, options: ApiRequestOptions = {}) {
   let response = await fetch(url, { method, body: payload, headers, signal })
 
   if (response.status === 401 && auth) {
-    try {
-      const refreshedToken = await refreshAccessToken(signal)
-      headers.set('authorization', `Bearer ${refreshedToken}`)
-      response = await fetch(url, { method, body: payload, headers, signal })
-    } catch (error) {
-      // The `refreshAccessToken` function already handles logging out on failure.
-      throw error
-    }
+    const refreshedToken = await refreshAccessToken(signal)
+    headers.set('authorization', `Bearer ${refreshedToken}`)
+    response = await fetch(url, { method, body: payload, headers, signal })
   }
 
   const data = (await parseJson(response)) as T

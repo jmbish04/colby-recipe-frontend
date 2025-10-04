@@ -210,6 +210,9 @@
           "id": "TASK-104",
           "name": "Implement React Router and App Shell",
           "description": "Set up client-side routing with React Router v6, create app shell with navigation, and implement route-based code splitting.",
+          "status": "completed",
+          "completedDate": "2025-10-04",
+          "notes": "Introduced lazy-loaded feature routes, a shared AppShell with shadcn navigation menu + mobile sheet, and TanStack Query-powered route prefetching/skeleton fallbacks.",
           "success_criteria": "All routes are defined and navigable. Route transitions are smooth. Code is split by route. Navigation component shows active states.",
           "unit_tests": [
             "Test that all routes render correct components",
@@ -243,12 +246,12 @@
             ]
           },
           "sub_tasks": [
-            {"id": "SUB-104-1", "status": "To Do", "description": "Install react-router-dom v6"},
-            {"id": "SUB-104-2", "status": "To Do", "description": "Create route configuration with lazy-loaded components"},
-            {"id": "SUB-104-3", "status": "To Do", "description": "Build app shell with header, nav, and main content area"},
-            {"id": "SUB-104-4", "status": "To Do", "description": "Implement desktop navigation with shadcn navigation-menu"},
-            {"id": "SUB-104-5", "status": "To Do", "description": "Implement mobile navigation with shadcn sheet"},
-            {"id": "SUB-104-6", "status": "To Do", "description": "Add loading states with Suspense and skeleton"}
+            {"id": "SUB-104-1", "status": "completed", "description": "Install react-router-dom v6"},
+            {"id": "SUB-104-2", "status": "completed", "description": "Create route configuration with lazy-loaded components"},
+            {"id": "SUB-104-3", "status": "completed", "description": "Build app shell with header, nav, and main content area"},
+            {"id": "SUB-104-4", "status": "completed", "description": "Implement desktop navigation with shadcn navigation-menu"},
+            {"id": "SUB-104-5", "status": "completed", "description": "Implement mobile navigation with shadcn sheet"},
+            {"id": "SUB-104-6", "status": "completed", "description": "Add loading states with Suspense and skeleton"}
           ]
         }
       ]
