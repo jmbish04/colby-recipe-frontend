@@ -160,7 +160,7 @@ export default function KitchenHubRoute() {
         </TabsContent>
 
         <TabsContent value="pantry" className="space-y-4">
-          <IngredientList items={data.pantry as Ingredient[]} />
+          <IngredientList items={data.pantry} />
         </TabsContent>
 
         <TabsContent value="prep" className="space-y-4">
