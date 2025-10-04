@@ -100,9 +100,9 @@ export function AuthPanel() {
                   'Sign in'
                 )}
               </Button>
-              <p className="text-xs text-muted-foreground">
+              <FormDescription className="text-xs">
                 Credentials are stored securely in session storage and refreshed automatically when needed.
-              </p>
+              </FormDescription>
             </form>
           </Form>
         )}
