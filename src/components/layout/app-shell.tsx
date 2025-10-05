@@ -83,7 +83,7 @@ function DesktopNavigation({ navItems, activeKey }: DesktopNavigationProps) {
   const queryClient = useQueryClient()
 
   return (
-    <NavigationMenu aria-label="Primary">
+    <NavigationMenu>
       <NavigationMenuList>
         {navItems.map((item) => (
           <NavigationMenuItem key={item.key}>
