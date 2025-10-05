@@ -7,15 +7,21 @@
 - Refined toast deduplication and documentation across `README.md`, `PROMPT_PHASE_3.md`, and `project_tasks.json`.
 
 ## Objectives Checklist (Phase 4)
-- [ ] **TASK-202**: Implement asynchronous manual processing UI with conditional polling and status transitions.
-  - [ ] SUB-202-1: Create `useApplianceStatus` hook that polls `/api/kitchen/appliances/:id` with `refetchInterval`.
-  - [ ] SUB-202-2: Ensure polling only runs while status is QUEUED/PROCESSING and pauses otherwise.
-  - [ ] SUB-202-3: Surface badges/spinner/progress updates inside `ApplianceCard` for intermediate states.
-  - [ ] SUB-202-4: Fire deduplicated toasts when processing completes in the background.
-  - [ ] SUB-202-5: Handle error states with retry affordances in the UI and Worker mocks.
-- [ ] Update docs (`README.md`, this prompt, project_tasks.json) with new behaviours when TASK-202 completes.
+- [x] **TASK-202**: Implement asynchronous manual processing UI with conditional polling and status transitions.
+  - [x] SUB-202-1: Create `useApplianceStatus` hook that polls `/api/kitchen/appliances/:id` with `refetchInterval`.
+  - [x] SUB-202-2: Ensure polling only runs while status is QUEUED/PROCESSING and pauses otherwise.
+  - [x] SUB-202-3: Surface badges/spinner/progress updates inside `ApplianceCard` for intermediate states.
+  - [x] SUB-202-4: Fire deduplicated toasts when processing completes in the background.
+  - [x] SUB-202-5: Handle error states with retry affordances in the UI and Worker mocks.
+- [x] Update docs (`README.md`, this prompt, project_tasks.json) with new behaviours when TASK-202 completes.
 - [ ] Capture refreshed desktop + mobile screenshots of the Kitchen Hub UI once polling UX lands.
 - [ ] Run `npm run lint`, `npm run test`, `npm run build`, and `npx wrangler deploy --dry-run` before handing off.
+
+### Phase 4 progress notes
+
+- Added `useApplianceStatus` and `useRetryApplianceProcessingMutation` hooks so each card polls its detail endpoint only while manuals are queued or processing, raising deduplicated success/error toasts when background transitions occur.
+- Enhanced `ApplianceCard` with queued/processing badges, inline spinners, progress feedback, error messaging, and retry controls wired to the new Cloudflare Worker `/retry` action and failure simulations.
+- Updated Worker mocks and integration tests to cover queued → processing → ready transitions, background completion, and retry recovery paths for failed manuals.
 
 ## Technical & Architectural Notes
 - `useAppliancesQuery` already polls while any appliance is `processing`; extend or compose with a per-appliance hook to satisfy TASK-202 without over-polling.

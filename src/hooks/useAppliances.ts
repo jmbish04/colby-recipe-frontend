@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   useMutation,
   useQuery,
@@ -8,9 +8,9 @@ import {
 } from '@tanstack/react-query'
 
 import { useApi } from '@/lib/api'
-import { showErrorToast, showSuccessToast } from '@/lib/toast'
+import { showErrorToast, showInfoToast, showSuccessToast } from '@/lib/toast'
 
-export type ApplianceStatus = 'processing' | 'ready' | 'error'
+export type ApplianceStatus = 'queued' | 'processing' | 'ready' | 'error'
 
 export interface Appliance {
   id: string
@@ -23,6 +23,7 @@ export interface Appliance {
   manualFileName?: string | null
   manualUrl?: string | null
   processingProgress?: number | null
+  statusDetail?: string | null
 }
 
 export interface ApplianceListResponse {
@@ -33,7 +34,9 @@ export interface ApplianceResponse {
   appliance: Appliance
 }
 
-const appliancesKey = ['kitchen', 'appliances'] as const
+export const appliancesKey = ['kitchen', 'appliances'] as const
+
+export const applianceDetailKey = (applianceId: string) => [...appliancesKey, applianceId] as const
 
 function useSimulatedProgress(isActive: boolean, isComplete: boolean) {
   const [progress, setProgress] = useState(0)
@@ -86,7 +89,7 @@ export function useAppliancesQuery(): UseQueryResult<Appliance[]> {
         return false
       }
 
-      return list.some((appliance) => appliance.status === 'processing') ? 2000 : false
+      return list.some((appliance) => appliance.status === 'processing' || appliance.status === 'queued') ? 2000 : false
     },
   })
 }
@@ -129,12 +132,13 @@ export function useCreateApplianceMutation() {
         brand: variables.brand,
         model: variables.model,
         nickname: variables.nickname ?? null,
-        status: 'processing',
+        status: 'queued',
         uploadedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         manualFileName: variables.manual.name,
         manualUrl: null,
-        processingProgress: 12,
+        processingProgress: 0,
+        statusDetail: null,
       }
 
       queryClient.setQueryData<Appliance[]>(appliancesKey, (existing) => [optimisticAppliance, ...(existing ?? [])])
@@ -171,6 +175,139 @@ export function useCreateApplianceMutation() {
   const progress = useSimulatedProgress(mutation.status === 'pending', mutation.status === 'success')
 
   return useMemo(() => ({ ...mutation, progress }), [mutation, progress]) as CreateMutation & { progress: number }
+}
+
+export function useApplianceStatus(appliance: Appliance) {
+  const api = useApi()
+  const queryClient = useQueryClient()
+  const previousStatusRef = useRef<ApplianceStatus>(appliance.status)
+  const previousIdRef = useRef(appliance.id)
+
+  useEffect(() => {
+    if (appliance.id !== previousIdRef.current) {
+      previousIdRef.current = appliance.id
+      previousStatusRef.current = appliance.status
+    }
+  }, [appliance.id, appliance.status])
+
+  const detailQuery = useQuery<Appliance>({
+    queryKey: applianceDetailKey(appliance.id),
+    queryFn: async () => {
+      const response = await api.get<ApplianceResponse>(`/api/kitchen/appliances/${appliance.id}`)
+      return response.appliance
+    },
+    enabled: appliance.status === 'queued' || appliance.status === 'processing',
+    refetchInterval: (query) => {
+      const current = (query.state.data as Appliance | undefined)?.status ?? appliance.status
+      return current === 'queued' || current === 'processing' ? 1600 : false
+    },
+  })
+
+  const resolvedAppliance = detailQuery.data ?? appliance
+  const activeStatus = resolvedAppliance.status
+
+  useEffect(() => {
+    const nextAppliance = detailQuery.data
+    if (!nextAppliance) {
+      return
+    }
+
+    queryClient.setQueryData<Appliance[]>(appliancesKey, (existing) => {
+      if (!existing) {
+        return [nextAppliance]
+      }
+
+      return existing.map((item) => (item.id === nextAppliance.id ? nextAppliance : item))
+    })
+  }, [detailQuery.data, queryClient])
+
+  useEffect(() => {
+    const previous = previousStatusRef.current
+    const next = activeStatus
+
+    if (previous === next) {
+      return
+    }
+
+    const transitionedFromBackground = previous === 'queued' || previous === 'processing'
+
+    if (transitionedFromBackground && next === 'ready') {
+      showSuccessToast('Manual ready')
+    }
+
+    if (transitionedFromBackground && next === 'error') {
+      showErrorToast('Manual processing failed')
+    }
+
+    previousStatusRef.current = next
+  }, [activeStatus])
+
+  return {
+    appliance: resolvedAppliance,
+    isPolling: detailQuery.isFetching || detailQuery.isRefetching,
+    query: detailQuery,
+  }
+}
+
+type RetryContext = { previous?: Appliance[] }
+
+export function useRetryApplianceProcessingMutation() {
+  const api = useApi()
+  const queryClient = useQueryClient()
+
+  return useMutation<Appliance, Error, string, RetryContext>({
+    mutationFn: async (applianceId) => {
+      const response = await api.post<ApplianceResponse>(`/api/kitchen/appliances/${applianceId}/retry`, {
+        body: {},
+      })
+
+      return response.appliance
+    },
+    onMutate: async (applianceId) => {
+      await queryClient.cancelQueries({ queryKey: appliancesKey })
+      const previous = queryClient.getQueryData<Appliance[]>(appliancesKey)
+
+      queryClient.setQueryData<Appliance[]>(appliancesKey, (existing) => {
+        const source = existing ?? previous ?? []
+
+        return source.map((item) =>
+          item.id === applianceId
+            ? {
+                ...item,
+                status: 'queued',
+                processingProgress: 0,
+                statusDetail: null,
+                updatedAt: new Date().toISOString(),
+              }
+            : item,
+        )
+      })
+
+      return { previous }
+    },
+    onError: (error, _applianceId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(appliancesKey, context.previous)
+      }
+
+      showErrorToast(error.message)
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData<Appliance[]>(appliancesKey, (existing) => {
+        if (!existing) {
+          return [data]
+        }
+
+        return existing.map((item) => (item.id === data.id ? data : item))
+      })
+
+      showInfoToast('Manual reprocessing queued')
+    },
+    onSettled: (_data, _error, applianceId) => {
+      void queryClient.invalidateQueries({ queryKey: appliancesKey })
+      void queryClient.invalidateQueries({ queryKey: applianceDetailKey(applianceId) })
+    },
+  })
 }
 
 type DeleteContext = { previous?: Appliance[] }

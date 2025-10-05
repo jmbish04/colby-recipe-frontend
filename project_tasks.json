@@ -324,6 +324,9 @@
           "id": "TASK-202",
           "name": "Implement Asynchronous Manual Processing UI with Polling",
           "description": "Handle the asynchronous processing of appliance manuals with status polling. Show processing states and update UI automatically.",
+          "status": "completed",
+          "completedDate": "2025-10-06",
+          "notes": "Added per-appliance polling, queued/processing badges, retry UX, background completion toasts, Cloudflare Worker /retry support, and integration tests for polling + retry flows.",
           "success_criteria": "After upload, UI shows 'Processing' state. Status updates automatically without page refresh. UI transitions to 'Completed' or 'Failed' states. Error messages are clear.",
           "unit_tests": [
             "Mock status endpoint and test UI transitions through QUEUED, PROCESSING, COMPLETED",
@@ -341,11 +344,11 @@
               "Maximum polling duration to prevent infinite loops",
               "Show estimated time remaining if available from backend"
             ],
-            "status_states": "QUEUED → PROCESSING → COMPLETED or FAILED"
+            "status_states": "QUEUED → PROCESSING → READY or ERROR"
           },
           "shadcn_implementation": {
             "status_display": [
-              "badge - Show current status (Processing, Ready, Error)",
+              "badge - Show current status (Queued, Processing, Ready, Error)",
               "progress - For processing progress if percentage available",
               "spinner - Animated loading during processing",
               "alert - For error states with retry option"
@@ -358,11 +361,11 @@
             ]
           },
           "sub_tasks": [
-            {"id": "SUB-202-1", "status": "To Do", "description": "Create useApplianceStatus hook with refetchInterval polling"},
-            {"id": "SUB-202-2", "status": "To Do", "description": "Implement conditional polling (only when status is QUEUED/PROCESSING)"},
-            {"id": "SUB-202-3", "status": "To Do", "description": "Add status badges and spinner to ApplianceCard"},
-            {"id": "SUB-202-4", "status": "To Do", "description": "Show toast notification when processing completes"},
-            {"id": "SUB-202-5", "status": "To Do", "description": "Handle error states with retry option"}
+            {"id": "SUB-202-1", "status": "completed", "description": "Create useApplianceStatus hook with refetchInterval polling"},
+            {"id": "SUB-202-2", "status": "completed", "description": "Implement conditional polling (only when status is QUEUED/PROCESSING)"},
+            {"id": "SUB-202-3", "status": "completed", "description": "Add status badges and spinner to ApplianceCard"},
+            {"id": "SUB-202-4", "status": "completed", "description": "Show toast notification when processing completes"},
+            {"id": "SUB-202-5", "status": "completed", "description": "Handle error states with retry option"}
           ]
         }
       ]
