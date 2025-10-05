@@ -8,6 +8,25 @@ const API_PREFIX = '/api'
 const ACCESS_TOKEN_PREFIX = 'mock-access-token-'
 const REFRESH_TOKEN_PREFIX = 'mock-refresh-token-'
 
+type ApplianceStatus = 'processing' | 'ready' | 'error'
+
+interface ApplianceRecord {
+  id: string
+  brand: string
+  model: string
+  nickname?: string
+  status: ApplianceStatus
+  uploadedAt: string
+  updatedAt: string
+  manualFileName?: string | null
+  manualUrl?: string | null
+  processingProgress?: number
+}
+
+const appliancesStore = new Map<string, ApplianceRecord>()
+const processingTimers = new Map<string, ReturnType<typeof setTimeout>[]>()
+const MANUAL_CDN_BASE = 'https://manuals.menuforge.app'
+
 type JsonValue = Record<string, unknown> | Array<unknown> | string | number | boolean | null
 
 function jsonResponse(data: JsonValue, init?: ResponseInit) {
@@ -28,6 +47,102 @@ function errorResponse(status: number, message: string) {
   return jsonResponse({ message }, { status })
 }
 
+function serializeAppliance(record: ApplianceRecord) {
+  return {
+    id: record.id,
+    brand: record.brand,
+    model: record.model,
+    nickname: record.nickname ?? null,
+    status: record.status,
+    uploadedAt: record.uploadedAt,
+    updatedAt: record.updatedAt,
+    manualFileName: record.manualFileName ?? null,
+    manualUrl: record.manualUrl ?? null,
+    processingProgress: record.processingProgress ?? null,
+  }
+}
+
+function scheduleProcessing(record: ApplianceRecord) {
+  const existingTimers = processingTimers.get(record.id)
+  existingTimers?.forEach((timer) => clearTimeout(timer))
+
+  const timers: ReturnType<typeof setTimeout>[] = []
+  record.status = 'processing'
+  record.processingProgress = record.processingProgress ?? 18
+
+  timers.push(
+    setTimeout(() => {
+      record.processingProgress = 60
+      record.updatedAt = new Date().toISOString()
+    }, 900),
+  )
+
+  timers.push(
+    setTimeout(() => {
+      record.status = 'ready'
+      record.processingProgress = 100
+      record.manualUrl = `${MANUAL_CDN_BASE}/${record.id}/${encodeURIComponent(record.manualFileName ?? 'manual.pdf')}`
+      record.updatedAt = new Date().toISOString()
+      processingTimers.delete(record.id)
+    }, 2200),
+  )
+
+  processingTimers.set(record.id, timers)
+}
+
+function clearProcessingTimers(applianceId: string) {
+  const timers = processingTimers.get(applianceId)
+  if (timers) {
+    timers.forEach((timer) => clearTimeout(timer))
+    processingTimers.delete(applianceId)
+  }
+}
+
+function ensureSeedAppliances() {
+  if (appliancesStore.size > 0) {
+    return
+  }
+
+  const now = new Date().toISOString()
+  const readyAppliance: ApplianceRecord = {
+    id: 'appliance-001',
+    brand: 'Anova',
+    model: 'Precision Oven',
+    nickname: 'Steam oven',
+    status: 'ready',
+    uploadedAt: now,
+    updatedAt: now,
+    manualFileName: 'anova-precision-oven.pdf',
+    manualUrl: `${MANUAL_CDN_BASE}/appliance-001/anova-precision-oven.pdf`,
+    processingProgress: 100,
+  }
+
+  const processingAppliance: ApplianceRecord = {
+    id: 'appliance-002',
+    brand: 'Breville',
+    model: 'Control Freak',
+    nickname: 'Induction hob',
+    status: 'processing',
+    uploadedAt: now,
+    updatedAt: now,
+    manualFileName: 'breville-control-freak.pdf',
+    manualUrl: null,
+    processingProgress: 35,
+  }
+
+  appliancesStore.set(readyAppliance.id, readyAppliance)
+  appliancesStore.set(processingAppliance.id, processingAppliance)
+  scheduleProcessing(processingAppliance)
+}
+
+function listAppliances() {
+  ensureSeedAppliances()
+
+  return Array.from(appliancesStore.values())
+    .sort((a, b) => (a.uploadedAt < b.uploadedAt ? 1 : -1))
+    .map(serializeAppliance)
+}
+
 async function parseJsonBody<T>(request: Request): Promise<T | null> {
   try {
     return (await request.clone().json()) as T
@@ -42,6 +157,104 @@ function encodeToken(prefix: string, email: string) {
   const encoded = btoa(normalizedEmail)
   const nonce = crypto.randomUUID()
   return `${prefix}${encoded}.${nonce}`
+}
+
+async function handleListAppliances(request: Request) {
+  if (request.method !== 'GET') {
+    return errorResponse(405, 'Method Not Allowed')
+  }
+
+  return jsonResponse({ appliances: listAppliances() })
+}
+
+async function handleGetAppliance(request: Request, applianceId: string) {
+  if (request.method !== 'GET') {
+    return errorResponse(405, 'Method Not Allowed')
+  }
+
+  ensureSeedAppliances()
+  const record = appliancesStore.get(applianceId)
+  if (!record) {
+    return errorResponse(404, 'Appliance not found')
+  }
+
+  return jsonResponse({ appliance: serializeAppliance(record) })
+}
+
+async function handleCreateAppliance(request: Request) {
+  if (request.method !== 'POST') {
+    return errorResponse(405, 'Method Not Allowed')
+  }
+
+  const contentType = request.headers.get('content-type') ?? ''
+  if (!contentType.includes('multipart/form-data')) {
+    return errorResponse(400, 'Request must be multipart/form-data')
+  }
+
+  const formData = await request.formData()
+  const brand = String(formData.get('brand') ?? '').trim()
+  const model = String(formData.get('model') ?? '').trim()
+  const nicknameValue = formData.get('nickname')
+  const nickname = typeof nicknameValue === 'string' ? nicknameValue.trim() : ''
+  const manualFile = formData.get('manual')
+
+  if (!brand) {
+    return errorResponse(400, 'Brand is required')
+  }
+
+  if (!model) {
+    return errorResponse(400, 'Model is required')
+  }
+
+  if (!(manualFile instanceof File)) {
+    return errorResponse(400, 'Manual upload is required')
+  }
+
+  if (manualFile.type !== 'application/pdf') {
+    return errorResponse(400, 'Manual must be provided as a PDF document')
+  }
+
+  const MAX_BYTES = 25 * 1024 * 1024
+  if (manualFile.size > MAX_BYTES) {
+    return errorResponse(413, 'Manual exceeds the 25MB limit for uploads')
+  }
+
+  const now = new Date().toISOString()
+  const id = crypto.randomUUID()
+
+  const record: ApplianceRecord = {
+    id,
+    brand,
+    model,
+    nickname: nickname || undefined,
+    status: 'processing',
+    uploadedAt: now,
+    updatedAt: now,
+    manualFileName: manualFile.name || `${brand}-${model}.pdf`.replace(/\s+/g, '-').toLowerCase(),
+    manualUrl: null,
+    processingProgress: 24,
+  }
+
+  appliancesStore.set(id, record)
+  scheduleProcessing(record)
+
+  return jsonResponse({ appliance: serializeAppliance(record) }, { status: 201 })
+}
+
+async function handleDeleteAppliance(request: Request, applianceId: string) {
+  if (request.method !== 'DELETE') {
+    return errorResponse(405, 'Method Not Allowed')
+  }
+
+  ensureSeedAppliances()
+  const existed = appliancesStore.delete(applianceId)
+  clearProcessingTimers(applianceId)
+
+  if (!existed) {
+    return errorResponse(404, 'Appliance not found')
+  }
+
+  return jsonResponse({ ok: true }, { status: 200 })
 }
 
 function decodeToken(prefix: string, token: string) {
@@ -200,6 +413,41 @@ export default {
       }
 
       return handleCurrentUser(request)
+    }
+
+    if (url.pathname === `${API_PREFIX}/kitchen/appliances`) {
+      if (request.method === 'GET') {
+        return handleListAppliances(request)
+      }
+
+      if (request.method === 'POST') {
+        return handleCreateAppliance(request)
+      }
+
+      return errorResponse(405, 'Method Not Allowed')
+    }
+
+    if (url.pathname.startsWith(`${API_PREFIX}/kitchen/appliances/`)) {
+      const segments = url.pathname.slice(`${API_PREFIX}/kitchen/appliances`.length).split('/').filter(Boolean)
+      const applianceId = segments[0]
+
+      if (!applianceId) {
+        return errorResponse(404, 'Appliance not found')
+      }
+
+      if (segments.length > 1) {
+        return errorResponse(404, 'Endpoint not implemented in mock worker')
+      }
+
+      if (request.method === 'GET') {
+        return handleGetAppliance(request, applianceId)
+      }
+
+      if (request.method === 'DELETE') {
+        return handleDeleteAppliance(request, applianceId)
+      }
+
+      return errorResponse(405, 'Method Not Allowed')
     }
 
     if (url.pathname.startsWith(API_PREFIX)) {

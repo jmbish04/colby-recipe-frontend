@@ -27,6 +27,13 @@ Advance EPIC-2 by delivering TASK-201: a Smart Kitchen Hub appliance list that s
 - Documentation updates in `README.md` and `PROMPT_PHASE_3.md` (this file) describing the new appliance features and any configuration steps.
 - `project_tasks.json` entries updated with accurate status, notes, and completion date for TASK-201 and related subtasks.
 
+## Implementation Notes
+- Added `src/routes/kitchen-hub.tsx` appliance manager with shadcn cards, dialogs, alert dialogs, and progress bars powered by new TanStack Query hooks for listing, creating, and deleting appliances.
+- Introduced `src/hooks/useAppliances.ts` for `GET`, `POST`, and `DELETE /api/kitchen/appliances` with optimistic cache updates and simulated upload progress to keep the UI responsive.
+- Extended `worker/index.ts` to mock appliance endpoints, validate multipart uploads, and simulate manual processing transitions.
+- Created `src/routes/__tests__/kitchen-hub.test.tsx` integration tests (Vitest + Testing Library) covering loading, adding, and deleting appliances.
+- Added `vitest.setup.ts`, updated `vite.config.ts`, and wired `npm run test` into the toolchain to support the new test suite.
+
 ## Validation & Quality Gates
 - `npm run lint`
 - `npm run build`
