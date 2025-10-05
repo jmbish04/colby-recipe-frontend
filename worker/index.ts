@@ -81,7 +81,7 @@ function scheduleProcessing(record: ApplianceRecord) {
   timers.push(
     setTimeout(() => {
       record.status = 'processing'
-      record.processingProgress = Math.max(record.processingProgress ?? 0, 24)
+      record.processingProgress = 24
       record.updatedAt = new Date().toISOString()
     }, 700),
   )
