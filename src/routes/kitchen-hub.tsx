@@ -663,7 +663,7 @@ function StatusBadge({ status, isPolling }: { status: Appliance['status']; isPol
         className="flex items-center gap-2 border-amber-500 text-amber-600 dark:border-amber-400 dark:text-amber-300"
       >
         <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-        {isPolling ? 'Processing…' : 'Processing'}
+        {isPolling ? 'Processing…' : 'Processing…'}
       </Badge>
     )
   }
