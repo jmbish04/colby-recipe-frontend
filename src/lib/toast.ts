@@ -4,8 +4,9 @@ type ToastKind = 'message' | 'success' | 'error' | 'info' | 'warning'
 
 const activeToasts = new Map<string, ReturnType<typeof setTimeout>>()
 
-function normalizeMessage(message: string) {
-  return message.trim().toLowerCase().replace(/\s+/g, '-').slice(0, 64) || crypto.randomUUID()
+function normalizeMessage(message: string, kind: ToastKind) {
+  const normalizedMessage = message.trim().toLowerCase().replace(/\s+/g, '-').slice(0, 64)
+  return `${kind}-${normalizedMessage || crypto.randomUUID()}`
 }
 
 function scheduleRelease(id: string, duration: number, onRelease?: () => void) {
@@ -28,7 +29,7 @@ function clearTimer(id: string) {
 }
 
 function showToast(kind: ToastKind, message: string, options?: ExternalToast) {
-  const id = String(options?.id ?? normalizeMessage(message))
+  const id = String(options?.id ?? normalizeMessage(message, kind))
 
   if (activeToasts.has(id)) {
     return id

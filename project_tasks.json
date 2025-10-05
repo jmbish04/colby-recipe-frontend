@@ -265,8 +265,8 @@
           "name": "Build 'My Kitchen' Appliance List UI",
           "description": "Create the main page for viewing, adding, and deleting kitchen appliances with PDF manual upload support.",
           "status": "completed",
-          "completedDate": "2025-02-15",
-          "notes": "Delivered a shadcn-powered appliance grid with optimistic TanStack Query mutations, simulated upload progress, Cloudflare Worker mocks, and Vitest integration coverage for load/add/delete flows.",
+          "completedDate": "2025-10-05",
+          "notes": "Shipped responsive shadcn appliance management with optimistic TanStack Query CRUD, multipart uploads with simulated progress, refined toast deduplication, Worker CRUD mocks, and Vitest coverage for load/add/delete scenarios.",
           "success_criteria": "Users can see a list of their appliances. A form allows adding new appliances with manual upload. Upload progress is shown. Delete works with confirmation.",
           "unit_tests": [
             "Test that the appliance list renders correctly with mock data",
