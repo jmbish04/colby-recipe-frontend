@@ -55,7 +55,7 @@ export function AppShell({ navItems }: AppShellProps) {
               <p className="text-sm font-semibold text-foreground">Culinary control center</p>
             </div>
           </div>
-          <nav className="hidden items-center gap-4 md:flex">
+          <nav aria-label="Primary" className="hidden items-center gap-4 md:flex">
             <DesktopNavigation navItems={navItems} activeKey={activeItem?.key} />
             <ThemeToggle />
           </nav>
@@ -95,6 +95,7 @@ function DesktopNavigation({ navItems, activeKey }: DesktopNavigationProps) {
                     isActive ? 'bg-muted text-foreground' : 'text-muted-foreground'
                   }`
                 }
+                aria-label={`${item.label} – ${item.description}`}
                 onFocus={() => void prefetchRouteData(queryClient, item.key)}
                 onMouseEnter={() => void prefetchRouteData(queryClient, item.key)}
                 onTouchStart={() => void prefetchRouteData(queryClient, item.key)}
@@ -102,6 +103,7 @@ function DesktopNavigation({ navItems, activeKey }: DesktopNavigationProps) {
               >
                 <span aria-hidden="true">{item.icon}</span>
                 {item.label}
+                <span className="sr-only">{item.description}</span>
               </NavLink>
             </NavigationMenuLink>
           </NavigationMenuItem>
@@ -130,7 +132,7 @@ function MobileNavigation({ navItems }: MobileNavigationProps) {
       <SheetContent side="left" className="w-72 sm:max-w-xs">
         <div className="space-y-2 py-4">
           <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">Navigate</p>
-          <nav className="grid gap-2">
+          <nav aria-label="Primary mobile" className="grid gap-2">
             {navItems.map((item) => (
               <SheetClose asChild key={item.key}>
                 <NavLink
@@ -140,6 +142,7 @@ function MobileNavigation({ navItems }: MobileNavigationProps) {
                       isActive ? 'bg-muted text-foreground' : 'bg-background/80 text-muted-foreground hover:bg-background'
                     }`
                   }
+                  aria-label={`${item.label} – ${item.description}`}
                   onFocus={() => void prefetchRouteData(queryClient, item.key)}
                   onMouseEnter={() => void prefetchRouteData(queryClient, item.key)}
                   onTouchStart={() => void prefetchRouteData(queryClient, item.key)}
@@ -149,6 +152,7 @@ function MobileNavigation({ navItems }: MobileNavigationProps) {
                     <span className="font-medium text-foreground">{item.label}</span>
                     <span className="text-xs text-muted-foreground">{item.description}</span>
                   </span>
+                  <span className="sr-only">Go to the {item.label} experience</span>
                 </NavLink>
               </SheetClose>
             ))}

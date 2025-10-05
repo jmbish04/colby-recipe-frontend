@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 
 import { AuthPanel } from '@/components/auth-panel'
-import { IngredientList, type Ingredient } from '@/components/ingredient-list'
+import { IngredientList } from '@/components/ingredient-list'
 import { RecipeCard } from '@/components/recipe-card'
 import { Button } from '@/components/ui/button'
 import {

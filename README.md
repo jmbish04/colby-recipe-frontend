@@ -39,8 +39,9 @@ The design system is built with shadcn/ui primitives and a shared token layer:
 
 ## Routing & navigation
 
-- `src/App.tsx` defines route-based code splitting with React Router, loading feature areas on demand.
-- `src/components/layout/app-shell.tsx` renders the shared app chrome, desktop navigation menu, and mobile sheet navigation with TanStack Query route prefetching.
+- `src/App.tsx` defines route-based code splitting with React Router, loading feature areas on demand via `React.lazy` and `Suspense`.
+- `src/components/layout/app-shell.tsx` renders the shared app chrome, desktop navigation menu, and mobile sheet navigation with TanStack Query route prefetching plus WCAG-friendly labelling for keyboard and screen-reader use.
+- Navigation automatically prefetches the two most likely next routes after each transition and hints additional data when links receive hover, focus, or touch interactions.
 - Individual route modules under `src/routes/` (chat, kitchen hub, recipes, planner) pull data via suspense-enabled hooks in `src/lib/routeData.ts` to showcase loading states and layout patterns.
 
 ## Authentication & data layer

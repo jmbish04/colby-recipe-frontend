@@ -87,3 +87,12 @@ The frontend is tightly coupled with the Cloudflare ecosystem.
 * **Don’t** store sensitive information or API keys in the frontend code. Authentication relies on user-specific tokens managed by the auth flow.
 * **Don’t** embed static data like Mermaid definitions directly in components. Fetch them from the API to ensure they are always up-to-date.
 * **Don't** use the native `EventSource` API for streaming. Use `fetch` with a `ReadableStream` to have better control over the request lifecycle and error handling, as specified in the implementation details.
+
+---
+
+#### **Process Requirements**
+
+* **Always** run and pass `npm run lint`, `npm run build`, and `npx wrangler deploy --dry-run` before opening a PR.
+* Update `project_tasks.json` so that every touched task has an accurate status, notes, and completion date.
+* Keep documentation synchronized: update the current `PROMPT_PHASE_{n}.md`, add the next sequential `PROMPT_PHASE_{n+1}.md` handoff prompt, and reflect feature changes in `README.md`.
+* Capture required screenshots (desktop + mobile when UI changes are visible) and attach them to the PR description.

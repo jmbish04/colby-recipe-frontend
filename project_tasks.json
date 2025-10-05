@@ -212,7 +212,7 @@
           "description": "Set up client-side routing with React Router v6, create app shell with navigation, and implement route-based code splitting.",
           "status": "completed",
           "completedDate": "2025-10-04",
-          "notes": "Introduced lazy-loaded feature routes, a shared AppShell with shadcn navigation menu + mobile sheet, and TanStack Query-powered route prefetching/skeleton fallbacks.",
+          "notes": "Delivered lazy-loaded feature routes inside an accessible shadcn-powered app shell with desktop navigation menu, mobile sheet, and TanStack Query prefetching plus suspense skeletons.",
           "success_criteria": "All routes are defined and navigable. Route transitions are smooth. Code is split by route. Navigation component shows active states.",
           "unit_tests": [
             "Test that all routes render correct components",
