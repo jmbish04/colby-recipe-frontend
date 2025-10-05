@@ -9,7 +9,7 @@ import { selectIsAuthenticated, useAuthStore } from '@/stores/useAuthStore'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from './ui/form'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form'
 import { Input } from './ui/input'
 import { Skeleton } from './ui/skeleton'
 
@@ -100,9 +100,9 @@ export function AuthPanel() {
                   'Sign in'
                 )}
               </Button>
-              <FormDescription className="text-xs">
+              <p className="text-xs text-muted-foreground">
                 Credentials are stored securely in session storage and refreshed automatically when needed.
-              </FormDescription>
+              </p>
             </form>
           </Form>
         )}

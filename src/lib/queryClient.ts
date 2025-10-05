@@ -1,15 +1,15 @@
 import { QueryCache, QueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
 
 import { ApiError } from '@/lib/api'
+import { showErrorToast } from '@/lib/toast'
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error) => {
       if (error instanceof ApiError) {
-        toast.error(error.message)
+        showErrorToast(error.message)
       } else {
-        toast.error('Something went wrong while communicating with the MenuForge API.')
+        showErrorToast('Something went wrong while communicating with the MenuForge API.')
       }
     },
   }),

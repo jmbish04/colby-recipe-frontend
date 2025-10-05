@@ -26,6 +26,7 @@ This starts the application with `wrangler dev`, which serves the Vite developme
 - `npm run build` – type-check and build the production bundle to `dist`
 - `npm run preview` – preview the production build using `wrangler pages dev`
 - `npm run lint` – lint the codebase with ESLint and TypeScript rules
+- `npm run test` – run the Vitest + Testing Library suite
 
 ## Design system
 
@@ -53,6 +54,13 @@ The design system is built with shadcn/ui primitives and a shared token layer:
 - `worker/index.ts` now includes mock `/api/auth/login`, `/api/auth/refresh`, and `/api/auth/me` endpoints so the frontend can simulate realistic auth cycles without a live backend.
 - `src/components/auth-panel.tsx` exposes the authentication showcase panel used inside the kitchen hub route alongside the broader navigation shell.
 - `src/lib/routeData.ts` simulates feature data and powers TanStack Query prefetching so navigation feels responsive even before real APIs land.
+
+## Smart kitchen hub appliances
+
+- `src/routes/kitchen-hub.tsx` renders the "My kitchen appliances" manager with shadcn cards, dialogs, progress bars, and alert dialogs to showcase listing, uploading, and deleting hardware entries.
+- `src/hooks/useAppliances.ts` provides TanStack Query hooks for `GET`, `POST`, and `DELETE` appliance endpoints with optimistic updates, simulated upload progress, and toast-based success/error feedback.
+- `worker/index.ts` mocks `/api/kitchen/appliances` REST endpoints including multipart upload validation and delayed processing to emulate manual ingestion.
+- Integration coverage for the appliance UX lives in `src/routes/__tests__/kitchen-hub.test.tsx` and exercises loading, creation, and deletion flows against mocked fetch responses.
 
 ## Project structure
 
