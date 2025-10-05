@@ -48,9 +48,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 import {
+  useApplianceStatus,
   useAppliancesQuery,
   useCreateApplianceMutation,
   useDeleteApplianceMutation,
+  useRetryApplianceProcessingMutation,
   type Appliance,
 } from '@/hooks/useAppliances'
 import { useRouteData } from '@/lib/routeData'
@@ -95,6 +97,7 @@ export default function KitchenHubRoute() {
   const appliancesQuery = useAppliancesQuery()
   const createAppliance = useCreateApplianceMutation()
   const deleteAppliance = useDeleteApplianceMutation()
+  const retryProcessing = useRetryApplianceProcessingMutation()
 
   const form = useForm<MealPlanFormValues>({
     resolver: zodResolver(mealPlanSchema),
@@ -135,6 +138,7 @@ export default function KitchenHubRoute() {
           isFetching={appliancesQuery.isFetching}
           createMutation={createAppliance}
           deleteMutation={deleteAppliance}
+          retryMutation={retryProcessing}
         />
 
         <div className="space-y-6">
@@ -251,9 +255,17 @@ interface ApplianceManagerProps {
   isFetching: boolean
   createMutation: ReturnType<typeof useCreateApplianceMutation>
   deleteMutation: ReturnType<typeof useDeleteApplianceMutation>
+  retryMutation: ReturnType<typeof useRetryApplianceProcessingMutation>
 }
 
-function ApplianceManager({ appliances, isLoading, isFetching, createMutation, deleteMutation }: ApplianceManagerProps) {
+function ApplianceManager({
+  appliances,
+  isLoading,
+  isFetching,
+  createMutation,
+  deleteMutation,
+  retryMutation,
+}: ApplianceManagerProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const showEmptyState = !isLoading && appliances.length === 0
@@ -299,6 +311,8 @@ function ApplianceManager({ appliances, isLoading, isFetching, createMutation, d
               appliance={appliance}
               onDelete={(id) => deleteMutation.mutate(id)}
               isDeleting={deleteMutation.isPending && deleteMutation.variables === appliance.id}
+              onRetry={() => retryMutation.mutate(appliance.id)}
+              isRetrying={retryMutation.isPending && retryMutation.variables === appliance.id}
             />
           ))}
         </div>
@@ -479,10 +493,18 @@ interface ApplianceCardProps {
   appliance: Appliance
   onDelete: (id: string) => void
   isDeleting: boolean
+  onRetry: () => void
+  isRetrying: boolean
 }
 
-function ApplianceCard({ appliance, onDelete, isDeleting }: ApplianceCardProps) {
-  const isProcessing = appliance.status === 'processing'
+function ApplianceCard({ appliance, onDelete, isDeleting, onRetry, isRetrying }: ApplianceCardProps) {
+  const { appliance: trackedAppliance, isPolling } = useApplianceStatus(appliance)
+  const status = trackedAppliance.status
+  const isQueued = status === 'queued'
+  const isProcessing = status === 'processing'
+  const isErrored = status === 'error'
+  const processingProgress = trackedAppliance.processingProgress ?? 0
+  const manualUrl = trackedAppliance.manualUrl
 
   return (
     <Card role="listitem" className="flex h-full flex-col justify-between">
@@ -490,61 +512,97 @@ function ApplianceCard({ appliance, onDelete, isDeleting }: ApplianceCardProps) 
         <div className="flex items-start justify-between gap-3">
           <div>
             <CardTitle className="text-lg font-semibold text-foreground">
-              {appliance.brand}
+              {trackedAppliance.brand}
             </CardTitle>
-            <CardDescription className="text-sm text-muted-foreground">{appliance.model}</CardDescription>
-            {appliance.nickname ? (
-              <p className="mt-1 text-xs text-muted-foreground">Nickname: {appliance.nickname}</p>
+            <CardDescription className="text-sm text-muted-foreground">{trackedAppliance.model}</CardDescription>
+            {trackedAppliance.nickname ? (
+              <p className="mt-1 text-xs text-muted-foreground">Nickname: {trackedAppliance.nickname}</p>
             ) : null}
           </div>
-          <StatusBadge status={appliance.status} />
+          <StatusBadge status={status} isPolling={isPolling} />
         </div>
         <div className="space-y-2 text-xs text-muted-foreground">
           <p>
-            Uploaded <time dateTime={appliance.uploadedAt}>{formatDateTime(appliance.uploadedAt)}</time>
+            Uploaded <time dateTime={trackedAppliance.uploadedAt}>{formatDateTime(trackedAppliance.uploadedAt)}</time>
           </p>
           <p>
-            Updated <time dateTime={appliance.updatedAt}>{formatDateTime(appliance.updatedAt)}</time>
+            Updated <time dateTime={trackedAppliance.updatedAt}>{formatDateTime(trackedAppliance.updatedAt)}</time>
           </p>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-center gap-2 rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-sm">
           <FileText className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-          <span className="truncate" title={appliance.manualFileName ?? undefined}>
-            {appliance.manualFileName ?? 'Manual processing…'}
+          <span className="truncate" title={trackedAppliance.manualFileName ?? undefined}>
+            {trackedAppliance.manualFileName ?? 'Manual processing…'}
           </span>
         </div>
+        {isQueued ? (
+          <p className="flex items-center gap-2 text-xs text-muted-foreground" aria-live="polite">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+            Manual queued for processing…
+          </p>
+        ) : null}
         {isProcessing ? (
           <div className="space-y-1" aria-live="polite">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Processing manual…</span>
-              <span>{appliance.processingProgress ?? 24}%</span>
+              <span>{processingProgress}%</span>
             </div>
-            <Progress value={appliance.processingProgress ?? 24} aria-label="Processing progress" />
+            <Progress value={processingProgress} aria-label="Processing progress" />
+          </div>
+        ) : null}
+        {isErrored && trackedAppliance.statusDetail ? (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            {trackedAppliance.statusDetail}
           </div>
         ) : null}
       </CardContent>
       <CardFooter className="flex flex-wrap items-center justify-between gap-2">
-        <Button
-          variant="outline"
-          className="gap-2"
-          size="sm"
-          asChild
-          disabled={!appliance.manualUrl || isProcessing}
-        >
-          <a href={appliance.manualUrl ?? '#'} aria-disabled={!appliance.manualUrl || isProcessing} target="_blank" rel="noreferrer">
-            <FileText className="h-4 w-4" aria-hidden="true" />
-            View manual
-          </a>
-        </Button>
+        <div className="flex flex-1 flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            className="gap-2"
+            size="sm"
+            asChild
+            disabled={!manualUrl || isQueued || isProcessing || isErrored}
+          >
+            <a
+              href={manualUrl ?? '#'}
+              aria-disabled={!manualUrl || isQueued || isProcessing || isErrored}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <FileText className="h-4 w-4" aria-hidden="true" />
+              View manual
+            </a>
+          </Button>
+          {isErrored ? (
+            <Button
+              variant="secondary"
+              className="gap-2"
+              size="sm"
+              onClick={onRetry}
+              disabled={isRetrying}
+            >
+              {isRetrying ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  Retrying…
+                </span>
+              ) : (
+                'Retry processing'
+              )}
+            </Button>
+          ) : null}
+        </div>
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
               variant="ghost"
               className="gap-2 text-destructive hover:text-destructive"
               size="sm"
-              aria-label={`Remove ${appliance.brand} ${appliance.model}`}
+              aria-label={`Remove ${trackedAppliance.brand} ${trackedAppliance.model}`}
             >
               <Trash2 className="h-4 w-4" aria-hidden="true" />
               Remove
@@ -562,7 +620,7 @@ function ApplianceCard({ appliance, onDelete, isDeleting }: ApplianceCardProps) 
               <AlertDialogAction
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 disabled={isDeleting}
-                onClick={() => onDelete(appliance.id)}
+                onClick={() => onDelete(trackedAppliance.id)}
               >
                 {isDeleting ? (
                   <span className="flex items-center gap-2">
@@ -581,22 +639,38 @@ function ApplianceCard({ appliance, onDelete, isDeleting }: ApplianceCardProps) 
   )
 }
 
-function StatusBadge({ status }: { status: Appliance['status'] }) {
+function StatusBadge({ status, isPolling }: { status: Appliance['status']; isPolling: boolean }) {
   if (status === 'ready') {
     return <Badge variant="secondary">Ready</Badge>
   }
 
+  if (status === 'queued') {
+    return (
+      <Badge
+        variant="outline"
+        className="flex items-center gap-2 border-sky-500 text-sky-600 dark:border-sky-400 dark:text-sky-300"
+      >
+        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+        Queued
+      </Badge>
+    )
+  }
+
   if (status === 'processing') {
     return (
-      <Badge variant="outline" className="border-amber-500 text-amber-600 dark:border-amber-400 dark:text-amber-300">
-        Processing
+      <Badge
+        variant="outline"
+        className="flex items-center gap-2 border-amber-500 text-amber-600 dark:border-amber-400 dark:text-amber-300"
+      >
+        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+        {isPolling ? 'Processing…' : 'Processing…'}
       </Badge>
     )
   }
 
   return (
     <Badge variant="outline" className="border-destructive text-destructive">
-      Attention
+      Action needed
     </Badge>
   )
 }

@@ -8,7 +8,7 @@ const API_PREFIX = '/api'
 const ACCESS_TOKEN_PREFIX = 'mock-access-token-'
 const REFRESH_TOKEN_PREFIX = 'mock-refresh-token-'
 
-type ApplianceStatus = 'processing' | 'ready' | 'error'
+type ApplianceStatus = 'queued' | 'processing' | 'ready' | 'error'
 
 interface ApplianceRecord {
   id: string
@@ -21,6 +21,9 @@ interface ApplianceRecord {
   manualFileName?: string | null
   manualUrl?: string | null
   processingProgress?: number
+  statusDetail?: string | null
+  processingOutcome?: 'success' | 'error'
+  failureReason?: string | null
 }
 
 const appliancesStore = new Map<string, ApplianceRecord>()
@@ -59,6 +62,7 @@ function serializeAppliance(record: ApplianceRecord) {
     manualFileName: record.manualFileName ?? null,
     manualUrl: record.manualUrl ?? null,
     processingProgress: record.processingProgress ?? null,
+    statusDetail: record.statusDetail ?? null,
   }
 }
 
@@ -67,24 +71,53 @@ function scheduleProcessing(record: ApplianceRecord) {
   existingTimers?.forEach((timer) => clearTimeout(timer))
 
   const timers: ReturnType<typeof setTimeout>[] = []
-  record.status = 'processing'
-  record.processingProgress = record.processingProgress ?? 18
+  record.processingOutcome = record.processingOutcome ?? 'success'
+  record.status = 'queued'
+  record.statusDetail = null
+  record.processingProgress = 0
+  record.manualUrl = null
+  record.updatedAt = new Date().toISOString()
 
   timers.push(
     setTimeout(() => {
-      record.processingProgress = 60
+      record.status = 'processing'
+      record.processingProgress = 24
       record.updatedAt = new Date().toISOString()
-    }, 900),
+    }, 700),
   )
 
   timers.push(
     setTimeout(() => {
-      record.status = 'ready'
-      record.processingProgress = 100
-      record.manualUrl = `${MANUAL_CDN_BASE}/${record.id}/${encodeURIComponent(record.manualFileName ?? 'manual.pdf')}`
+      if (record.status === 'processing') {
+        record.processingProgress = 62
+        record.updatedAt = new Date().toISOString()
+      }
+    }, 1500),
+  )
+
+  timers.push(
+    setTimeout(() => {
+      const outcome = record.processingOutcome ?? 'success'
       record.updatedAt = new Date().toISOString()
+
+      if (outcome === 'error') {
+        record.status = 'error'
+        record.processingProgress = 100
+        record.manualUrl = null
+        record.statusDetail =
+          record.failureReason ?? 'Manual processing failed. Try again or upload a clearer PDF.'
+      } else {
+        record.status = 'ready'
+        record.processingProgress = 100
+        record.manualUrl = `${MANUAL_CDN_BASE}/${record.id}/${encodeURIComponent(
+          record.manualFileName ?? 'manual.pdf',
+        )}`
+        record.statusDetail = null
+        record.failureReason = null
+      }
+
       processingTimers.delete(record.id)
-    }, 2200),
+    }, record.processingOutcome === 'error' ? 2800 : 2200),
   )
 
   processingTimers.set(record.id, timers)
@@ -115,6 +148,8 @@ function ensureSeedAppliances() {
     manualFileName: 'anova-precision-oven.pdf',
     manualUrl: `${MANUAL_CDN_BASE}/appliance-001/anova-precision-oven.pdf`,
     processingProgress: 100,
+    statusDetail: null,
+    processingOutcome: 'success',
   }
 
   const processingAppliance: ApplianceRecord = {
@@ -122,16 +157,35 @@ function ensureSeedAppliances() {
     brand: 'Breville',
     model: 'Control Freak',
     nickname: 'Induction hob',
-    status: 'processing',
+    status: 'queued',
     uploadedAt: now,
     updatedAt: now,
     manualFileName: 'breville-control-freak.pdf',
     manualUrl: null,
-    processingProgress: 35,
+    processingProgress: 0,
+    statusDetail: null,
+    processingOutcome: 'success',
+  }
+
+  const failedAppliance: ApplianceRecord = {
+    id: 'appliance-003',
+    brand: 'KitchenAid',
+    model: 'Smart Oven+',
+    nickname: 'Lab test unit',
+    status: 'error',
+    uploadedAt: now,
+    updatedAt: now,
+    manualFileName: 'kitchenaid-smart-oven.pdf',
+    manualUrl: null,
+    processingProgress: 100,
+    statusDetail: 'Manual ingestion failed. Retry processing to rebuild capabilities.',
+    processingOutcome: 'error',
+    failureReason: 'Manual ingestion failed. Retry processing to rebuild capabilities.',
   }
 
   appliancesStore.set(readyAppliance.id, readyAppliance)
   appliancesStore.set(processingAppliance.id, processingAppliance)
+  appliancesStore.set(failedAppliance.id, failedAppliance)
   scheduleProcessing(processingAppliance)
 }
 
@@ -222,17 +276,26 @@ async function handleCreateAppliance(request: Request) {
   const now = new Date().toISOString()
   const id = crypto.randomUUID()
 
+  const manualFileName = manualFile.name || `${brand}-${model}.pdf`.replace(/\s+/g, '-').toLowerCase()
+  const shouldFail = manualFileName.toLowerCase().includes('fail')
+  const failureReason = shouldFail
+    ? 'Manual upload could not be parsed. Retry after confirming the PDF is readable.'
+    : null
+
   const record: ApplianceRecord = {
     id,
     brand,
     model,
     nickname: nickname || undefined,
-    status: 'processing',
+    status: 'queued',
     uploadedAt: now,
     updatedAt: now,
-    manualFileName: manualFile.name || `${brand}-${model}.pdf`.replace(/\s+/g, '-').toLowerCase(),
+    manualFileName,
     manualUrl: null,
-    processingProgress: 24,
+    processingProgress: 0,
+    statusDetail: null,
+    processingOutcome: shouldFail ? 'error' : 'success',
+    failureReason,
   }
 
   appliancesStore.set(id, record)
@@ -255,6 +318,36 @@ async function handleDeleteAppliance(request: Request, applianceId: string) {
   }
 
   return jsonResponse({ ok: true }, { status: 200 })
+}
+
+async function handleRetryAppliance(request: Request, applianceId: string) {
+  if (request.method !== 'POST') {
+    return errorResponse(405, 'Method Not Allowed')
+  }
+
+  ensureSeedAppliances()
+  const record = appliancesStore.get(applianceId)
+
+  if (!record) {
+    return errorResponse(404, 'Appliance not found')
+  }
+
+  const body = (await parseJsonBody<{ outcome?: 'success' | 'error'; reason?: string }>(request)) ?? {}
+  const outcome = body.outcome === 'error' ? 'error' : 'success'
+
+  record.processingOutcome = outcome
+  record.failureReason =
+    outcome === 'error'
+      ? body.reason ?? 'Manual processing failed during retry. Please try again shortly.'
+      : null
+  record.statusDetail = null
+  record.manualUrl = null
+  record.processingProgress = 0
+  record.updatedAt = new Date().toISOString()
+
+  scheduleProcessing(record)
+
+  return jsonResponse({ appliance: serializeAppliance(record) }, { status: 202 })
 }
 
 function decodeToken(prefix: string, token: string) {
@@ -436,6 +529,12 @@ export default {
       }
 
       if (segments.length > 1) {
+        const action = segments[1]
+
+        if (action === 'retry') {
+          return handleRetryAppliance(request, applianceId)
+        }
+
         return errorResponse(404, 'Endpoint not implemented in mock worker')
       }
 
