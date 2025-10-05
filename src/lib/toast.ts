@@ -6,7 +6,7 @@ const activeToasts = new Map<string, ReturnType<typeof setTimeout>>()
 
 function normalizeMessage(message: string, kind: ToastKind) {
   const normalizedMessage = message.trim().toLowerCase().replace(/\s+/g, '-').slice(0, 64)
-  return `${kind}-${normalizedMessage || crypto.randomUUID()}`
+  return `${kind}-${normalizedMessage || 'empty-message'}`
 }
 
 function scheduleRelease(id: string, duration: number, onRelease?: () => void) {
