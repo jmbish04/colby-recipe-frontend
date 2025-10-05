@@ -1,45 +1,35 @@
-# Prompt Phase 3 Kickoff
+# Prompt Phase 3 Handoff
 
-## Objective
-Advance EPIC-2 by delivering TASK-201: a Smart Kitchen Hub appliance list that showcases CRUD flows, multipart uploads, and responsive feedback across desktop and mobile breakpoints.
+## Summary of TASK-201 (Smart Kitchen Hub)
+- Delivered the shadcn-powered **My Kitchen** appliance manager with responsive cards, dialogs, and alert dialogs that meet WCAG 2.1 AA for keyboard, focus, and aria labelling.
+- Wired TanStack Query hooks for listing, creating (multipart upload), and deleting appliances with optimistic cache updates, simulated upload progress, and background polling while manuals process.
+- Added refined toast deduplication so repeated success/error states do not spam the user while still surfacing actionable feedback.
+- Extended the Cloudflare Worker mock to support `/api/kitchen/appliances` CRUD with multipart validation, delayed processing, and generated manual URLs.
+- Authored Vitest + Testing Library integration coverage that exercises loading, creation, and deletion flows, ensuring the optimistic UX remains stable.
 
-## Context Recap
-- The app shell now provides accessible desktop navigation and a mobile sheet menu with TanStack Query route prefetching.
-- Feature routes for chat, kitchen hub, recipes, and planner are lazy loaded with suspense fallbacks via `src/lib/routeData.ts` mocks.
-- Authentication scaffolding (API client, Zustand store, TanStack Query provider) is live with Cloudflare Worker auth mocks.
+## Updated Artifacts
+- UI: `src/routes/kitchen-hub.tsx`
+- Data hooks: `src/hooks/useAppliances.ts`
+- Toast utilities: `src/lib/toast.ts`
+- Worker mocks: `worker/index.ts`
+- Tests: `src/routes/__tests__/kitchen-hub.test.tsx`
+- Documentation: `README.md`, `project_tasks.json`, and this prompt file
 
-## Primary Task — TASK-201
-1. Build the "My Kitchen" appliance list UI using shadcn components (`card`, `dialog`, `form`, `progress`, `alert-dialog`).
-2. Implement TanStack Query hooks for:
-   - Listing appliances (`GET /api/kitchen/appliances`).
-   - Creating appliances with multipart uploads (`POST /api/kitchen/appliances`).
-   - Deleting appliances with confirmation (`DELETE /api/kitchen/appliances/:id`).
-3. Provide optimistic UX: progress indicators during uploads, status badges, and immediate list updates.
-4. Ensure WCAG 2.1 AA compliance (focus management, aria-labels, keyboard support) across list, forms, and dialogs.
-
-## Supporting Work
-- Expand Worker mocks in `worker/index.ts` to cover the new appliance endpoints, including simulated processing states.
-- Add integration tests (Vitest + Testing Library) that cover loading, adding, and removing appliances.
-- Revisit toast deduplication/error handling with the new mutations.
-
-## Deliverables
-- Updated UI components, hooks, and Worker mocks that fulfill TASK-201.
-- Documentation updates in `README.md` and `PROMPT_PHASE_3.md` (this file) describing the new appliance features and any configuration steps.
-- `project_tasks.json` entries updated with accurate status, notes, and completion date for TASK-201 and related subtasks.
-
-## Implementation Notes
-- Added `src/routes/kitchen-hub.tsx` appliance manager with shadcn cards, dialogs, alert dialogs, and progress bars powered by new TanStack Query hooks for listing, creating, and deleting appliances.
-- Introduced `src/hooks/useAppliances.ts` for `GET`, `POST`, and `DELETE /api/kitchen/appliances` with optimistic cache updates and simulated upload progress to keep the UI responsive.
-- Extended `worker/index.ts` to mock appliance endpoints, validate multipart uploads, and simulate manual processing transitions.
-- Created `src/routes/__tests__/kitchen-hub.test.tsx` integration tests (Vitest + Testing Library) covering loading, adding, and deleting appliances.
-- Added `vitest.setup.ts`, updated `vite.config.ts`, and wired `npm run test` into the toolchain to support the new test suite.
-
-## Validation & Quality Gates
+## Quality Gates
 - `npm run lint`
+- `npm run test`
 - `npm run build`
 - `npx wrangler deploy --dry-run`
-- Relevant integration/unit tests (`npm run test` once introduced).
 
-## Artifacts
-- Capture fresh screenshots highlighting the Smart Kitchen Hub appliance list on desktop and mobile.
-- Include test results and deployment dry-run logs in the PR description.
+(See the PR description for command output and screenshot artifacts.)
+
+## Next Steps (Phase 4)
+1. Kick off **TASK-202** to implement asynchronous manual processing UI with conditional polling, explicit error handling, and completion toasts.
+2. Expand Worker mocks/tests as needed to represent manual status transitions and retry paths.
+3. Continue replacing simulated `routeData` fetchers with production-ready TanStack Query hooks as endpoints are mocked.
+4. Use the new `PROMPT_PHASE_4.md` handoff prompt for onboarding the next assignee.
+
+## Reference
+- `PROMPT_PHASE_4.md` (new phase kickoff checklist)
+- `project_tasks.json` (TASK-201 marked complete with updated notes and date)
+- Recorded kitchen hub screenshots (desktop & mobile) attached to the PR

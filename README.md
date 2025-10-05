@@ -57,9 +57,10 @@ The design system is built with shadcn/ui primitives and a shared token layer:
 
 ## Smart kitchen hub appliances
 
-- `src/routes/kitchen-hub.tsx` renders the "My kitchen appliances" manager with shadcn cards, dialogs, progress bars, and alert dialogs to showcase listing, uploading, and deleting hardware entries.
-- `src/hooks/useAppliances.ts` provides TanStack Query hooks for `GET`, `POST`, and `DELETE` appliance endpoints with optimistic updates, simulated upload progress, and toast-based success/error feedback.
-- `worker/index.ts` mocks `/api/kitchen/appliances` REST endpoints including multipart upload validation and delayed processing to emulate manual ingestion.
+- `src/routes/kitchen-hub.tsx` renders the "My kitchen appliances" manager with shadcn cards, dialogs, progress bars, and alert dialogs to showcase listing, uploading, and deleting hardware entries across mobile and desktop breakpoints.
+- Uploads provide accessible feedback with optimistic cache updates, simulated progress, focus-safe dialog flows, aria-labels, and status badges that surface processing, ready, and error states.
+- `src/hooks/useAppliances.ts` provides TanStack Query hooks for `GET`, `POST`, and `DELETE` appliance endpoints with optimistic updates, simulated upload progress, refined toast deduplication, and background polling while manuals process.
+- `worker/index.ts` mocks `/api/kitchen/appliances` REST endpoints including multipart upload validation, delayed processing, and manual links to emulate ingestion pipelines.
 - Integration coverage for the appliance UX lives in `src/routes/__tests__/kitchen-hub.test.tsx` and exercises loading, creation, and deletion flows against mocked fetch responses.
 
 ## Project structure
@@ -84,7 +85,7 @@ The `wrangler.jsonc` file enables SPA routing and directs `/api/*` requests to t
 
 ## Next steps
 
-- Expand the Cloudflare Worker mocks with kitchen, recipe, and planner endpoints that align with the new routes.
-- Replace the placeholder `routeData` fetchers with real TanStack Query hooks that call the Worker.
-- Add integration tests covering navigation, login/logout, and token refresh flows across routes.
+- **TASK-202 (Smart Kitchen Hub)** – Implement dedicated polling for manual processing, expose explicit error states with retry affordances, and raise background completion toasts once ingestion finalizes.
+- Expand Cloudflare Worker mocks with any additional kitchen/recipe/planner endpoints required for the next milestones.
+- Continue replacing simulated `routeData` fetchers with production-ready TanStack Query hooks routed through the Worker as endpoints mature.
 
