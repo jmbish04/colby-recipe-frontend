@@ -503,7 +503,7 @@ function ApplianceCard({ appliance, onDelete, isDeleting, onRetry, isRetrying }:
   const isQueued = status === 'queued'
   const isProcessing = status === 'processing'
   const isErrored = status === 'error'
-  const processingProgress = trackedAppliance.processingProgress ?? (isProcessing ? 24 : 0)
+  const processingProgress = trackedAppliance.processingProgress ?? 0
   const manualUrl = trackedAppliance.manualUrl
 
   return (
