@@ -369,9 +369,9 @@ export function RecipeEditorDialog({
                 <FormItem>
                   <FormLabel>Equipment</FormLabel>
                   <FormControl>
-                    <Textarea placeholder={'Anova Precision Oven\nQuarter sheet pan'} {...field} />
+                    <Textarea placeholder={'Anova Precision Oven\nQuarter sheet pan'} {...field} aria-describedby="equipment-hint" />
                   </FormControl>
-                  <FormDescription>List the appliances or tools required to execute the recipe.</FormDescription>
+                  <FormDescription id="equipment-hint">List the appliances or tools required to execute the recipe.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
