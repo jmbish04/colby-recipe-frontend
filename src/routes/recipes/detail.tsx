@@ -200,7 +200,7 @@ export default function RecipeDetailRoute() {
             <CardContent>
               <ol className="list-decimal space-y-3 pl-6 text-sm">
                 {recipe.instructions.map((step, index) => (
-                  <li key={`${index}-${step.substring(0, 12)}`}>{step}</li>
+                  <li key={`${index}-${step}`}>{step}</li>
                 ))}
               </ol>
             </CardContent>
