@@ -10,6 +10,25 @@ const REFRESH_TOKEN_PREFIX = 'mock-refresh-token-'
 
 type ApplianceStatus = 'queued' | 'processing' | 'ready' | 'error'
 
+type RecipeDifficulty = 'easy' | 'moderate' | 'advanced'
+
+interface RecipeRecord {
+  id: string
+  title: string
+  summary: string
+  cuisine: string
+  difficulty: RecipeDifficulty
+  totalMinutes: number
+  servings: number
+  tags: string[]
+  thumbnailUrl: string
+  createdAt: string
+  updatedAt: string
+  ingredients: string[]
+  instructions: string[]
+  equipment: string[]
+}
+
 interface ApplianceRecord {
   id: string
   brand: string
@@ -29,6 +48,8 @@ interface ApplianceRecord {
 const appliancesStore = new Map<string, ApplianceRecord>()
 const processingTimers = new Map<string, ReturnType<typeof setTimeout>[]>()
 const MANUAL_CDN_BASE = 'https://manuals.menuforge.app'
+
+const recipesStore = new Map<string, RecipeRecord>()
 
 type JsonValue = Record<string, unknown> | Array<unknown> | string | number | boolean | null
 
@@ -187,6 +208,381 @@ function ensureSeedAppliances() {
   appliancesStore.set(processingAppliance.id, processingAppliance)
   appliancesStore.set(failedAppliance.id, failedAppliance)
   scheduleProcessing(processingAppliance)
+}
+
+function serializeRecipeSummary(record: RecipeRecord) {
+  return {
+    id: record.id,
+    title: record.title,
+    summary: record.summary,
+    cuisine: record.cuisine,
+    difficulty: record.difficulty,
+    totalMinutes: record.totalMinutes,
+    servings: record.servings,
+    tags: record.tags,
+    thumbnailUrl: record.thumbnailUrl,
+    createdAt: record.createdAt,
+    updatedAt: record.updatedAt,
+  }
+}
+
+function serializeRecipeDetail(record: RecipeRecord) {
+  return {
+    ...serializeRecipeSummary(record),
+    ingredients: record.ingredients,
+    instructions: record.instructions,
+    equipment: record.equipment,
+  }
+}
+
+function ensureSeedRecipes() {
+  if (recipesStore.size > 0) {
+    return
+  }
+
+  const now = new Date().toISOString()
+  const baseRecipes: RecipeRecord[] = [
+    {
+      id: 'recipe-precision-bread',
+      title: 'Precision Steam-Rise Focaccia',
+      summary: 'High hydration dough with steam-assisted bake for golden crust and airy crumb.',
+      cuisine: 'Italian',
+      difficulty: 'moderate',
+      totalMinutes: 140,
+      servings: 6,
+      tags: ['bread', 'steam', 'vegetarian'],
+      thumbnailUrl:
+        'https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=600&q=80',
+      createdAt: now,
+      updatedAt: now,
+      ingredients: [
+        '500g bread flour',
+        '410g water, room temperature',
+        '15g fine sea salt',
+        '6g instant yeast',
+        '45g extra-virgin olive oil, divided',
+        'Flaky salt for finishing',
+        'Rosemary sprigs',
+      ],
+      instructions: [
+        'Combine flour, yeast, and water. Mix until shaggy and rest 15 minutes.',
+        'Fold in salt and 25g olive oil. Stretch and fold every 30 minutes for 2 hours.',
+        'Coat pan with remaining oil, transfer dough, and proof until doubled.',
+        'Use oiled fingers to dimple dough, top with rosemary, flaky salt.',
+        'Bake at 218°C with full steam for 20 minutes, finish dry heat 5 minutes.',
+        'Cool on rack 15 minutes before slicing.',
+      ],
+      equipment: ['Anova Precision Oven', 'Quarter sheet pan', 'Digital scale', 'Mixing bowl'],
+    },
+    {
+      id: 'recipe-induction-risotto',
+      title: 'Sensor-Calibrated Saffron Risotto',
+      summary: 'Stovetop risotto with precise induction control for silky grains and vibrant saffron.',
+      cuisine: 'Italian',
+      difficulty: 'advanced',
+      totalMinutes: 45,
+      servings: 4,
+      tags: ['rice', 'stovetop', 'gluten-free'],
+      thumbnailUrl:
+        'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80',
+      createdAt: now,
+      updatedAt: now,
+      ingredients: [
+        '1.2L low-sodium chicken stock',
+        '2 pinches saffron threads',
+        '40g unsalted butter, divided',
+        '1 small shallot, minced',
+        '320g carnaroli rice',
+        '120ml dry white wine',
+        '60g grated Parmigiano-Reggiano',
+        'Sea salt and white pepper',
+      ],
+      instructions: [
+        'Warm stock to 82°C on the induction hob, infuse saffron for 5 minutes.',
+        'Set induction to 135°C. Sweat shallot in 20g butter until translucent.',
+        'Toast rice 2 minutes, stir constantly. Deglaze with wine and reduce by half.',
+        'Add ladle of stock, stirring until absorbed. Repeat for 16-18 minutes.',
+        'Finish with remaining butter and cheese off-heat. Season to taste.',
+      ],
+      equipment: ['Breville Control Freak', 'Saucepan', 'Wooden spoon', 'Fine mesh strainer'],
+    },
+    {
+      id: 'recipe-grill-vegetables',
+      title: 'Char-Profiled Vegetable Symphony',
+      summary: 'Grilled seasonal vegetables with AI-optimized char and marinade retention.',
+      cuisine: 'Mediterranean',
+      difficulty: 'easy',
+      totalMinutes: 30,
+      servings: 4,
+      tags: ['grill', 'vegan', 'side'],
+      thumbnailUrl:
+        'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80&sat=-20',
+      createdAt: now,
+      updatedAt: now,
+      ingredients: [
+        '1 red bell pepper, cut into panels',
+        '1 zucchini, sliced lengthwise',
+        '1 red onion, wedges',
+        '150g oyster mushrooms',
+        '60ml smoked olive oil',
+        '15ml red wine vinegar',
+        '2 cloves garlic, grated',
+        '1 tbsp fresh thyme leaves',
+        'Flaky salt and pepper',
+      ],
+      instructions: [
+        'Combine olive oil, vinegar, garlic, thyme, salt, and pepper. Toss vegetables to coat.',
+        'Preheat grill insert to 260°C. Arrange vegetables in single layer.',
+        'Grill peppers and onions 6 minutes, turning once for crosshatch marks.',
+        'Grill zucchini and mushrooms 4 minutes until edges char and centers soften.',
+        'Rest vegetables 3 minutes. Finish with marinade drizzled over platter.',
+      ],
+      equipment: ['Smart grill insert', 'Stainless tongs', 'Mixing bowl'],
+    },
+  ]
+
+  baseRecipes.forEach((recipe) => {
+    recipesStore.set(recipe.id, recipe)
+  })
+}
+
+function listRecipes({
+  search,
+  difficulty,
+  tag,
+}: {
+  search?: string | null
+  difficulty?: RecipeDifficulty | null
+  tag?: string | null
+}) {
+  ensureSeedRecipes()
+
+  let recipes = Array.from(recipesStore.values())
+
+  if (search) {
+    const query = search.toLowerCase()
+    recipes = recipes.filter((recipe) =>
+      [recipe.title, recipe.summary, recipe.cuisine, ...recipe.tags]
+        .join(' ')
+        .toLowerCase()
+        .includes(query),
+    )
+  }
+
+  if (difficulty) {
+    recipes = recipes.filter((recipe) => recipe.difficulty === difficulty)
+  }
+
+  if (tag) {
+    const normalized = tag.trim().toLowerCase()
+    recipes = recipes.filter((recipe) => recipe.tags.some((item) => item.toLowerCase() === normalized))
+  }
+
+  recipes.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
+
+  return recipes.map(serializeRecipeSummary)
+}
+
+function parseStringArray(value: unknown, { field, minLength }: { field: string; minLength?: number }) {
+  if (!Array.isArray(value)) {
+    throw new Error(`${field} must be an array`)
+  }
+
+  const trimmed = value
+    .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+    .filter((entry) => entry.length > 0)
+
+  if (minLength && trimmed.length < minLength) {
+    throw new Error(`${field} must include at least ${minLength} item${minLength === 1 ? '' : 's'}`)
+  }
+
+  return trimmed
+}
+
+function parseRecipePayload(body: unknown) {
+  if (!body || typeof body !== 'object') {
+    throw new Error('Invalid JSON payload provided')
+  }
+
+  const payload = body as Record<string, unknown>
+  const title = typeof payload.title === 'string' ? payload.title.trim() : ''
+  const summary = typeof payload.summary === 'string' ? payload.summary.trim() : ''
+  const cuisine = typeof payload.cuisine === 'string' ? payload.cuisine.trim() : ''
+  const difficulty = payload.difficulty
+  const totalMinutes = Number(payload.totalMinutes)
+  const servings = Number(payload.servings)
+  const thumbnailUrl = typeof payload.thumbnailUrl === 'string' ? payload.thumbnailUrl.trim() : ''
+  const tagsValue = payload.tags
+  const ingredientsValue = payload.ingredients
+  const instructionsValue = payload.instructions
+  const equipmentValue = payload.equipment
+
+  if (!title || title.length < 3) {
+    throw new Error('Title must be at least 3 characters long')
+  }
+
+  if (!summary || summary.length < 10) {
+    throw new Error('Summary must be at least 10 characters long')
+  }
+
+  if (!cuisine) {
+    throw new Error('Cuisine is required')
+  }
+
+  const allowedDifficulties: RecipeDifficulty[] = ['easy', 'moderate', 'advanced']
+  if (typeof difficulty !== 'string' || !allowedDifficulties.includes(difficulty as RecipeDifficulty)) {
+    throw new Error('Difficulty must be easy, moderate, or advanced')
+  }
+
+  if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) {
+    throw new Error('Total minutes must be a positive number')
+  }
+
+  if (!Number.isFinite(servings) || servings <= 0) {
+    throw new Error('Servings must be a positive number')
+  }
+
+  if (!thumbnailUrl || !/^https?:\/\//.test(thumbnailUrl)) {
+    throw new Error('Thumbnail URL must be a valid absolute URL')
+  }
+
+  const tags = tagsValue
+    ? parseStringArray(tagsValue, { field: 'tags' }).map((tag) => tag.toLowerCase())
+    : ([] as string[])
+
+  const ingredients = parseStringArray(ingredientsValue, { field: 'ingredients', minLength: 1 })
+  const instructions = parseStringArray(instructionsValue, { field: 'instructions', minLength: 1 })
+  const equipment = parseStringArray(equipmentValue, { field: 'equipment', minLength: 1 })
+
+  return {
+    title,
+    summary,
+    cuisine,
+    difficulty: difficulty as RecipeDifficulty,
+    totalMinutes: Math.round(totalMinutes),
+    servings: Math.round(servings),
+    tags,
+    thumbnailUrl,
+    ingredients,
+    instructions,
+    equipment,
+  }
+}
+
+async function handleListRecipes(request: Request) {
+  if (request.method !== 'GET') {
+    return errorResponse(405, 'Method Not Allowed')
+  }
+
+  const url = new URL(request.url)
+  const search = url.searchParams.get('search')
+  const difficultyParam = url.searchParams.get('difficulty')
+  const tag = url.searchParams.get('tag')
+
+  let difficulty: RecipeDifficulty | null = null
+  if (difficultyParam && ['easy', 'moderate', 'advanced'].includes(difficultyParam)) {
+    difficulty = difficultyParam as RecipeDifficulty
+  }
+
+  const recipes = listRecipes({ search, difficulty, tag })
+  return jsonResponse({ recipes })
+}
+
+async function handleGetRecipe(request: Request, recipeId: string) {
+  if (request.method !== 'GET') {
+    return errorResponse(405, 'Method Not Allowed')
+  }
+
+  ensureSeedRecipes()
+  const record = recipesStore.get(recipeId)
+
+  if (!record) {
+    return errorResponse(404, 'Recipe not found')
+  }
+
+  return jsonResponse({ recipe: serializeRecipeDetail(record) })
+}
+
+async function handleCreateRecipe(request: Request) {
+  if (request.method !== 'POST') {
+    return errorResponse(405, 'Method Not Allowed')
+  }
+
+  const body = await parseJsonBody<unknown>(request)
+
+  if (!body) {
+    return errorResponse(400, 'Invalid JSON payload provided')
+  }
+
+  try {
+    const parsed = parseRecipePayload(body)
+    const now = new Date().toISOString()
+    const id = `recipe-${crypto.randomUUID()}`
+    const record: RecipeRecord = {
+      id,
+      ...parsed,
+      createdAt: now,
+      updatedAt: now,
+    }
+
+    recipesStore.set(id, record)
+
+    return jsonResponse({ recipe: serializeRecipeDetail(record) }, { status: 201 })
+  } catch (error) {
+    console.error('Failed to create recipe', error)
+    return errorResponse(400, error instanceof Error ? error.message : 'Unable to create recipe')
+  }
+}
+
+async function handleUpdateRecipe(request: Request, recipeId: string) {
+  if (request.method !== 'PUT') {
+    return errorResponse(405, 'Method Not Allowed')
+  }
+
+  ensureSeedRecipes()
+  const existing = recipesStore.get(recipeId)
+
+  if (!existing) {
+    return errorResponse(404, 'Recipe not found')
+  }
+
+  const body = await parseJsonBody<unknown>(request)
+
+  if (!body) {
+    return errorResponse(400, 'Invalid JSON payload provided')
+  }
+
+  try {
+    const parsed = parseRecipePayload(body)
+    const updated: RecipeRecord = {
+      ...existing,
+      ...parsed,
+      updatedAt: new Date().toISOString(),
+    }
+
+    recipesStore.set(recipeId, updated)
+
+    return jsonResponse({ recipe: serializeRecipeDetail(updated) })
+  } catch (error) {
+    console.error('Failed to update recipe', error)
+    return errorResponse(400, error instanceof Error ? error.message : 'Unable to update recipe')
+  }
+}
+
+async function handleDeleteRecipe(request: Request, recipeId: string) {
+  if (request.method !== 'DELETE') {
+    return errorResponse(405, 'Method Not Allowed')
+  }
+
+  ensureSeedRecipes()
+
+  const deleted = recipesStore.delete(recipeId)
+
+  if (!deleted) {
+    return errorResponse(404, 'Recipe not found')
+  }
+
+  return jsonResponse({ ok: true })
 }
 
 function listAppliances() {
@@ -544,6 +940,40 @@ export default {
 
       if (request.method === 'DELETE') {
         return handleDeleteAppliance(request, applianceId)
+      }
+
+      return errorResponse(405, 'Method Not Allowed')
+    }
+
+    if (url.pathname === `${API_PREFIX}/recipes`) {
+      if (request.method === 'GET') {
+        return handleListRecipes(request)
+      }
+
+      if (request.method === 'POST') {
+        return handleCreateRecipe(request)
+      }
+
+      return errorResponse(405, 'Method Not Allowed')
+    }
+
+    if (url.pathname.startsWith(`${API_PREFIX}/recipes/`)) {
+      const recipeId = url.pathname.slice(`${API_PREFIX}/recipes/`.length)
+
+      if (!recipeId) {
+        return errorResponse(404, 'Recipe not found')
+      }
+
+      if (request.method === 'GET') {
+        return handleGetRecipe(request, recipeId)
+      }
+
+      if (request.method === 'PUT') {
+        return handleUpdateRecipe(request, recipeId)
+      }
+
+      if (request.method === 'DELETE') {
+        return handleDeleteRecipe(request, recipeId)
       }
 
       return errorResponse(405, 'Method Not Allowed')

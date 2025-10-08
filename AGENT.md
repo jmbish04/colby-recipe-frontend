@@ -95,4 +95,4 @@ The frontend is tightly coupled with the Cloudflare ecosystem.
 * **Always** run and pass `npm run lint`, `npm run build`, and `npx wrangler deploy --dry-run` before opening a PR.
 * Update `project_tasks.json` so that every touched task has an accurate status, notes, and completion date.
 * Keep documentation synchronized: update the current `PROMPT_PHASE_{n}.md`, add the next sequential `PROMPT_PHASE_{n+1}.md` handoff prompt, and reflect feature changes in `README.md`.
-* Capture required screenshots (desktop + mobile when UI changes are visible) and attach them to the PR description.
+* Capture required screenshots (desktop + mobile when UI changes are visible) and attach them to the PR description. Host the images outside the repo and link them instead of committing binary assets so PR tooling remains functional.

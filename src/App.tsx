@@ -7,6 +7,7 @@ import { AppShell, type AppNavItem } from '@/components/layout/app-shell'
 const ChatRoute = lazy(() => import('@/routes/chat'))
 const KitchenHubRoute = lazy(() => import('@/routes/kitchen-hub'))
 const RecipesRoute = lazy(() => import('@/routes/recipes'))
+const RecipeDetailRoute = lazy(() => import('@/routes/recipes/detail'))
 const PlannerRoute = lazy(() => import('@/routes/planner'))
 const NotFoundRoute = lazy(() => import('@/routes/not-found'))
 
@@ -49,6 +50,7 @@ export default function App() {
         <Route path="chat" element={<ChatRoute />} />
         <Route path="kitchen" element={<KitchenHubRoute />} />
         <Route path="recipes" element={<RecipesRoute />} />
+        <Route path="recipes/:id" element={<RecipeDetailRoute />} />
         <Route path="planner" element={<PlannerRoute />} />
         <Route path="*" element={<NotFoundRoute />} />
       </Route>

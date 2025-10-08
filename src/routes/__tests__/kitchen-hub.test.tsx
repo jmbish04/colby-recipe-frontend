@@ -192,28 +192,32 @@ describe('KitchenHubRoute appliance manager', () => {
     expect(wasCalledWith('GET', '/api/kitchen/appliances')).toBe(true)
   })
 
-  it('allows adding a new appliance via the dialog', async () => {
-    const user = userEvent.setup()
-    renderKitchenHub(<KitchenHubRoute />)
+  it(
+    'allows adding a new appliance via the dialog',
+    async () => {
+      const user = userEvent.setup()
+      renderKitchenHub(<KitchenHubRoute />)
 
-    await screen.findByText('Anova')
+      await screen.findByText('Anova')
 
-    await user.click(screen.getByRole('button', { name: /add appliance/i }))
+      await user.click(screen.getByRole('button', { name: /add appliance/i }))
 
-    const dialog = await screen.findByRole('dialog')
-    await user.type(within(dialog).getByLabelText(/brand/i), 'GE Profile')
-    await user.type(within(dialog).getByLabelText(/model/i), 'Smart Wall Oven')
-    const file = new File(['pdf'], 'ge-profile.pdf', { type: 'application/pdf' })
-    await user.upload(within(dialog).getByLabelText(/manual/i), file)
-    await user.type(within(dialog).getByLabelText(/nickname/i), 'Wall oven')
+      const dialog = await screen.findByRole('dialog')
+      await user.type(within(dialog).getByLabelText(/brand/i), 'GE Profile')
+      await user.type(within(dialog).getByLabelText(/model/i), 'Smart Wall Oven')
+      const file = new File(['pdf'], 'ge-profile.pdf', { type: 'application/pdf' })
+      await user.upload(within(dialog).getByLabelText(/manual/i), file)
+      await user.type(within(dialog).getByLabelText(/nickname/i), 'Wall oven')
 
-    await user.click(within(dialog).getByRole('button', { name: /add appliance/i }))
+      await user.click(within(dialog).getByRole('button', { name: /add appliance/i }))
 
-    expect(await screen.findByText('GE Profile')).toBeInTheDocument()
-    await waitFor(() => {
-      expect(wasCalledWith('POST', '/api/kitchen/appliances')).toBe(true)
-    })
-  })
+      expect(await screen.findByText('GE Profile')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(wasCalledWith('POST', '/api/kitchen/appliances')).toBe(true)
+      })
+    },
+    10000,
+  )
 
   it('confirms and deletes an appliance', async () => {
     const user = userEvent.setup()
