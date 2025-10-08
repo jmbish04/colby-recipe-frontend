@@ -43,7 +43,7 @@ The design system is built with shadcn/ui primitives and a shared token layer:
 - `src/App.tsx` defines route-based code splitting with React Router, loading feature areas on demand via `React.lazy` and `Suspense`.
 - `src/components/layout/app-shell.tsx` renders the shared app chrome, desktop navigation menu, and mobile sheet navigation with TanStack Query route prefetching plus WCAG-friendly labelling for keyboard and screen-reader use.
 - Navigation automatically prefetches the two most likely next routes after each transition and hints additional data when links receive hover, focus, or touch interactions.
-- Individual route modules under `src/routes/` (chat, kitchen hub, recipes, planner) pull data via suspense-enabled hooks in `src/lib/routeData.ts` to showcase loading states and layout patterns.
+- Individual route modules under `src/routes/` (chat, kitchen hub, recipes, planner) pull data via suspense-enabled hooks in `src/lib/routeData.ts` to showcase loading states and layout patterns. The recipes area now includes both `/recipes` for the catalog and `/recipes/:id` for detail pages with lazy-loaded boundaries.
 
 ## Authentication & data layer
 
@@ -62,6 +62,14 @@ The design system is built with shadcn/ui primitives and a shared token layer:
 - `src/hooks/useAppliances.ts` provides TanStack Query hooks for `GET`, `POST`, and `DELETE` appliance endpoints, composes the per-appliance `useApplianceStatus` polling hook, exposes a retry mutation, and fires deduplicated success/error toasts as manuals complete in the background.
 - `worker/index.ts` mocks `/api/kitchen/appliances` REST endpoints including multipart upload validation, delayed processing, manual links, simulated failure states, and a `/retry` action to requeue ingestion attempts.
 - Integration coverage for the appliance UX lives in `src/routes/__tests__/kitchen-hub.test.tsx` and now exercises loading, creation, deletion, polling state transitions, and retry flows against mocked fetch responses.
+
+## Recipe intelligence workspace
+
+- `src/routes/recipes/index.tsx` implements the recipe catalog with search, difficulty and tag filters, accessible cards, and optimistic CRUD flows backed by shadcn dialogs and alert confirmation banners.
+- `src/routes/recipes/detail.tsx` provides a tabbed recipe detail surface with WCAG-compliant navigation for ingredients, instructions, and equipment along with inline editing and deletion controls.
+- `src/hooks/useRecipes.ts` hosts the TanStack Query hooks (`useRecipes`, `useRecipeDetail`, and CRUD mutations) that manage optimistic caching across list/detail queries and surface consistent toast feedback.
+- Worker mocks in `worker/index.ts` now cover `/api/recipes` REST endpoints, including validation, optimistic-friendly timestamps, and queryable search/tag filters so the frontend can iterate without a live backend.
+- `src/routes/__tests__/recipes.test.tsx` adds Vitest coverage for the listing and detail experiences, ensuring the dialog-powered edits dispatch the correct Worker mutations and update the UI optimistically.
 
 ## Project structure
 
@@ -82,6 +90,10 @@ The design system is built with shadcn/ui primitives and a shared token layer:
 ## Cloudflare configuration
 
 The `wrangler.jsonc` file enables SPA routing and directs `/api/*` requests to the Worker before falling back to static assets. When deployed to Cloudflare Pages, this ensures React Router can handle client-side navigation while keeping backend calls within the Worker environment.
+
+## PR workflow tips
+
+- Host UI review screenshots externally (for example, in cloud storage) and link them in pull requests. Avoid committing binary screenshot assets to the repo so that PR automation, including the `make_pr` helper, remains fully functional.
 
 ## Next steps
 

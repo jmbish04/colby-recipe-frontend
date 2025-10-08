@@ -185,10 +185,13 @@ export function useApplianceStatus(appliance: Appliance) {
 
   useEffect(() => {
     if (appliance.id !== previousIdRef.current) {
-      previousIdRef.current = appliance.id;
-      previousStatusRef.current = appliance.status;
+      previousIdRef.current = appliance.id
     }
-  }, [appliance.id]);
+
+    if (appliance.status !== previousStatusRef.current) {
+      previousStatusRef.current = appliance.status
+    }
+  }, [appliance.id, appliance.status])
 
   const detailQuery = useQuery<Appliance>({
     queryKey: applianceDetailKey(appliance.id),

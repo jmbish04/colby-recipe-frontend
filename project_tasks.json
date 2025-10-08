@@ -376,75 +376,53 @@
       "tasks": [
         {
           "id": "TASK-301",
-          "name": "Build Multi-Modal Chat Interface with Streaming",
-          "description": "Create chat component supporting text, voice, and image inputs with streaming AI responses using Server-Sent Events.",
-          "success_criteria": "Users can type messages, record voice, upload images. AI responses stream in real-time. Chat history is maintained. UI is responsive and accessible.",
+          "name": "Core Recipe Management UI",
+          "description": "Ship the recipe catalog and detail experience with TanStack Query hooks, shadcn UI, optimistic CRUD, and Cloudflare Worker mocks.",
+          "status": "completed",
+          "completedDate": "2025-10-07",
+          "notes": "Delivered recipe listing and detail routes with WCAG-accessible shadcn cards, filters, tabbed detail view, optimistic TanStack Query mutations, Cloudflare Worker mock endpoints for recipe CRUD, Vitest coverage, and README documentation.",
+          "success_criteria": "Users can browse recipes, open detail tabs for ingredients/instructions/equipment, create/update/delete entries with optimistic feedback, and experience accessible focus + keyboard flows.",
           "unit_tests": [
-            "Test text message sending and receiving",
-            "Test voice recording using mocked MediaRecorder",
-            "Test image upload and preview",
-            "Test SSE streaming message display",
-            "Test chat history persistence"
+            "Render recipe list with mocked Worker data",
+            "Verify detail view tab content renders ingredients and instructions",
+            "Exercise optimistic edit submission from detail view"
           ],
           "cloudflare_implementation": {
-            "streaming_api": {
-              "endpoint": "POST /api/chat with streaming response",
-              "format": "Server-Sent Events (text/event-stream)",
-              "client_handling": "Use EventSource or fetch with ReadableStream to process SSE",
-              "message_format": "data: {content, done} newline-separated events"
-            },
-            "voice_transcription": {
-              "endpoint": "POST /api/transcribe with multipart audio file",
-              "format": "FormData with 'file' field containing audio blob",
-              "supported_formats": "webm, mp4, wav (browser-dependent)",
-              "client_recording": "Use MediaRecorder API to capture audio, send blob to API"
-            },
-            "image_ingestion": {
-              "endpoint": "POST /api/ingest/image with multipart image files",
-              "format": "FormData with 'file' field (supports multiple)",
-              "max_size": "Validate file size before upload (suggest 10MB limit)",
-              "processing": "Backend uses OCR/vision models to extract recipe info"
-            },
-            "best_practices": [
-              "Use fetch with ReadableStream for SSE instead of EventSource for better control",
-              "Buffer streamed tokens and render in batches for smoother UX",
-              "Show typing indicator while waiting for first token",
-              "Handle stream errors and reconnection gracefully",
-              "Store chat history in IndexedDB for persistence across sessions",
-              "Implement auto-scroll to newest message during streaming"
+            "endpoints": [
+              "GET /api/recipes",
+              "GET /api/recipes/:id",
+              "POST /api/recipes",
+              "PUT /api/recipes/:id",
+              "DELETE /api/recipes/:id"
+            ],
+            "features": [
+              "In-memory store with seed data and updated timestamps",
+              "Search, difficulty, and tag filtering on list endpoint",
+              "Payload validation for title, summary, timings, arrays, and URL fields"
             ]
           },
           "shadcn_implementation": {
-            "chat_components": [
-              "card - Message bubbles for user and AI",
-              "input - Text input for messages",
-              "button - Send, voice record, image upload buttons",
-              "dialog - Image preview dialog",
-              "scroll-area - Chat message container",
-              "avatar - User and AI avatars",
-              "separator - Message date separators",
-              "skeleton - Loading states for AI response"
+            "components_used": [
+              "card - Recipe catalog tiles and overview panels",
+              "dialog - Create/edit recipe form",
+              "alert-dialog - Delete confirmations",
+              "form - React Hook Form + zod validation",
+              "tabs - Detail view navigation",
+              "badge - Tag and metadata chips",
+              "button, input, select, textarea"
             ],
-            "voice_recording_ui": "Show waveform animation or timer while recording. Use button with loading state during transcription.",
-            "image_upload_ui": "Show image thumbnail after selection. Display multiple images in grid if batch upload.",
-            "streaming_display": "Render AI response in real-time as tokens arrive. Use cursor blink effect at end of streaming text.",
-            "best_practices": [
-              "Use scroll-area for chat history with auto-scroll to bottom",
-              "Distinguish user vs AI messages with different card styles",
-              "Show timestamp for each message",
-              "Use skeleton for AI response placeholder before stream starts",
-              "Provide visual feedback for voice recording (pulsing mic icon)",
-              "Show image thumbnails with click to enlarge in dialog"
+            "accessibility": [
+              "Keyboard-focusable filters and actions",
+              "Dialogs with labelled controls and aria-live feedback",
+              "Tablist supporting arrow-key navigation"
             ]
           },
           "sub_tasks": [
-            {"id": "SUB-301-1", "status": "To Do", "description": "Build chat message UI with user/AI message bubbles using cards"},
-            {"id": "SUB-301-2", "status": "To Do", "description": "Implement text input with send button"},
-            {"id": "SUB-301-3", "status": "To Do", "description": "Implement voice recording with MediaRecorder API"},
-            {"id": "SUB-301-4", "status": "To Do", "description": "Implement image upload with preview"},
-            {"id": "SUB-301-5", "status": "To Do", "description": "Implement SSE streaming response display"},
-            {"id": "SUB-301-6", "status": "To Do", "description": "Add chat history persistence with IndexedDB"},
-            {"id": "SUB-301-7", "status": "To Do", "description": "Implement auto-scroll during streaming"}
+            {"id": "SUB-301-1", "status": "completed", "description": "Create the recipe listing page with shadcn cards showing metadata, thumbnails, and quick actions."},
+            {"id": "SUB-301-2", "status": "completed", "description": "Implement recipe detail view at /recipes/:id with tabbed ingredients, instructions, and equipment."},
+            {"id": "SUB-301-3", "status": "completed", "description": "Build useRecipes and useRecipeDetail TanStack Query hooks wired to Worker mocks."},
+            {"id": "SUB-301-4", "status": "completed", "description": "Add optimistic CRUD mutations with loading states and toast feedback."},
+            {"id": "SUB-301-5", "status": "completed", "description": "Ensure keyboard navigation, focus traps, and aria labelling meet WCAG 2.1 AA."}
           ]
         },
         {
