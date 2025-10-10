@@ -1,9 +1,11 @@
-import { MessageCircle, Pin } from 'lucide-react'
+import { MessageCircle, Pin, Sparkles } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { useRouteData } from '@/lib/routeData'
+import { RecipeCard } from '@/components/recipes/RecipeCard'
+import { useRouteData, type ChatMessage, type ChatMessageContent, type RecipeMessage } from '@/lib/routeData'
+import { cn } from '@/lib/utils'
 
 export default function ChatRoute() {
   const { data } = useRouteData('chat')
@@ -70,6 +72,61 @@ export default function ChatRoute() {
           </p>
         </CardContent>
       </Card>
+
+      <Card className="border border-border/70 bg-background/70">
+        <CardHeader className="space-y-2">
+          <CardTitle className="text-xl">Live thread</CardTitle>
+          <CardDescription>
+            Streaming context-aware responses from the MenuForge AI Sous Chef with generative recipe cards.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ol className="space-y-6">
+            {data.messages.map((message) => (
+              <ChatMessageItem key={message.id} message={message} />
+            ))}
+          </ol>
+        </CardContent>
+      </Card>
     </section>
+  )
+}
+
+function isRecipeContent(content: ChatMessageContent): content is RecipeMessage {
+  return typeof content === 'object' && content !== null && 'type' in content && content.type === 'recipe'
+}
+
+function ChatMessageItem({ message }: { message: ChatMessage }) {
+  const isAssistant = message.role === 'assistant'
+
+  if (isRecipeContent(message.content)) {
+    return (
+      <li className="space-y-3">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary">
+          <Sparkles className="h-4 w-4" aria-hidden="true" />
+          <span>AI Sous Chef recipe drop</span>
+        </div>
+        <RecipeCard recipe={message.content.data} className="border-primary/50 shadow-xl" />
+        <p className="text-xs text-muted-foreground">AI Sous Chef · {message.timestamp}</p>
+      </li>
+    )
+  }
+
+  return (
+    <li className={cn('flex flex-col gap-1', isAssistant ? 'items-start text-left' : 'items-end text-right')}>
+      <div
+        className={cn(
+          'max-w-2xl rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm transition',
+          isAssistant
+            ? 'bg-muted/70 text-foreground backdrop-blur'
+            : 'bg-primary text-primary-foreground shadow-primary/40',
+        )}
+      >
+        {message.content}
+      </div>
+      <span className="text-xs text-muted-foreground">
+        {isAssistant ? 'AI Sous Chef' : 'You'} · {message.timestamp}
+      </span>
+    </li>
   )
 }

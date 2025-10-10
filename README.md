@@ -33,7 +33,8 @@ This starts the application with `wrangler dev`, which serves the Vite developme
 The design system is built with shadcn/ui primitives and a shared token layer:
 
 - `src/components/ui` hosts the generated primitives plus additional navigation and sheet patterns.
-- Composite widgets such as recipe summaries and ingredient readiness views live in `src/components/recipe-card.tsx` and `src/components/ingredient-list.tsx`.
+- Composite widgets such as recipe summaries, generative chat recipe cards, and ingredient readiness views live in
+  `src/components/recipe-card.tsx`, `src/components/recipes/RecipeCard.tsx`, and `src/components/ingredient-list.tsx`.
 - Global CSS variables for color, typography, and spacing live in `src/index.css` and feed Tailwind via `tailwind.config.js`.
 - Dark mode is powered by [`next-themes`](https://github.com/pacocoursey/next-themes) with a `ThemeToggle` control in `src/components/theme-toggle.tsx`.
 - Toast notifications use the themed `sonner` integration in `src/components/ui/sonner.tsx`.
@@ -67,8 +68,11 @@ The design system is built with shadcn/ui primitives and a shared token layer:
 
 - `src/routes/recipes/index.tsx` implements the recipe catalog with search, difficulty and tag filters, accessible cards, and optimistic CRUD flows backed by shadcn dialogs and alert confirmation banners.
 - `src/routes/recipes/detail.tsx` provides a tabbed recipe detail surface with WCAG-compliant navigation for ingredients, instructions, and equipment along with inline editing and deletion controls.
+- `src/routes/chat.tsx` surfaces the AI Sous Chef conversation with quick prompts, pinned threads, and generative recipe cards
+  that parse structured AI responses into interactive checklists with TanStack Query shopping list mutations.
 - `src/hooks/useRecipes.ts` hosts the TanStack Query hooks (`useRecipes`, `useRecipeDetail`, and CRUD mutations) that manage optimistic caching across list/detail queries and surface consistent toast feedback.
 - Worker mocks in `worker/index.ts` now cover `/api/recipes` REST endpoints, including validation, optimistic-friendly timestamps, and queryable search/tag filters so the frontend can iterate without a live backend.
+- The Worker also provides `/api/shopping-list` to capture optimistic ingredient additions triggered from chat recipe cards.
 - `src/routes/__tests__/recipes.test.tsx` adds Vitest coverage for the listing and detail experiences, ensuring the dialog-powered edits dispatch the correct Worker mutations and update the UI optimistically.
 
 ## Project structure

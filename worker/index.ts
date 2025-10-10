@@ -51,6 +51,16 @@ const MANUAL_CDN_BASE = 'https://manuals.menuforge.app'
 
 const recipesStore = new Map<string, RecipeRecord>()
 
+interface ShoppingListItem {
+  id: string
+  name: string
+  quantity?: string
+  note?: string
+  addedAt: string
+}
+
+const shoppingListStore = new Map<string, ShoppingListItem>()
+
 type JsonValue = Record<string, unknown> | Array<unknown> | string | number | boolean | null
 
 function jsonResponse(data: JsonValue, init?: ResponseInit) {
@@ -585,6 +595,69 @@ async function handleDeleteRecipe(request: Request, recipeId: string) {
   return jsonResponse({ ok: true })
 }
 
+function serializeShoppingListItem(item: ShoppingListItem) {
+  return {
+    id: item.id,
+    name: item.name,
+    quantity: item.quantity ?? null,
+    note: item.note ?? null,
+    addedAt: item.addedAt,
+  }
+}
+
+async function handleListShoppingItems(request: Request) {
+  if (request.method !== 'GET') {
+    return errorResponse(405, 'Method Not Allowed')
+  }
+
+  const items = Array.from(shoppingListStore.values()).map(serializeShoppingListItem)
+  return jsonResponse({ items })
+}
+
+async function handleAddShoppingItems(request: Request) {
+  if (request.method !== 'POST') {
+    return errorResponse(405, 'Method Not Allowed')
+  }
+
+  const body = await parseJsonBody<{ items?: Array<Partial<ShoppingListItem>> }>(request)
+
+  if (!body || !Array.isArray(body.items)) {
+    return errorResponse(400, 'Request body must include an items array')
+  }
+
+  const timestamp = new Date().toISOString()
+  const normalized: Array<Omit<ShoppingListItem, 'addedAt'>> = []
+
+  for (const entry of body.items) {
+    const name = typeof entry.name === 'string' ? entry.name.trim() : ''
+
+    if (!name) {
+      continue
+    }
+
+    const id =
+      typeof entry.id === 'string' && entry.id.trim().length > 0 ? entry.id.trim() : crypto.randomUUID()
+    const quantity = typeof entry.quantity === 'string' && entry.quantity.trim().length > 0
+      ? entry.quantity.trim()
+      : undefined
+    const note = typeof entry.note === 'string' && entry.note.trim().length > 0 ? entry.note.trim() : undefined
+
+    normalized.push({ id, name, quantity, note })
+  }
+
+  if (normalized.length === 0) {
+    return errorResponse(400, 'At least one valid ingredient is required')
+  }
+
+  const added = normalized.map((item) => {
+    const record: ShoppingListItem = { ...item, addedAt: timestamp }
+    shoppingListStore.set(record.id, record)
+    return serializeShoppingListItem(record)
+  })
+
+  return jsonResponse({ ok: true, added }, { status: 201 })
+}
+
 function listAppliances() {
   ensureSeedAppliances()
 
@@ -940,6 +1013,18 @@ export default {
 
       if (request.method === 'DELETE') {
         return handleDeleteAppliance(request, applianceId)
+      }
+
+      return errorResponse(405, 'Method Not Allowed')
+    }
+
+    if (url.pathname === `${API_PREFIX}/shopping-list`) {
+      if (request.method === 'GET') {
+        return handleListShoppingItems(request)
+      }
+
+      if (request.method === 'POST') {
+        return handleAddShoppingItems(request)
       }
 
       return errorResponse(405, 'Method Not Allowed')
