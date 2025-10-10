@@ -427,53 +427,51 @@
         },
         {
           "id": "TASK-302",
-          "name": "Implement Generative Recipe Card UI in Chat",
-          "description": "Parse AI responses and dynamically render interactive recipe cards within the chat. Support contextual actions on ingredients and recipes.",
-          "success_criteria": "AI responses containing recipes render as rich cards. Ingredients have 'Add to List' buttons. Recipe cards have 'View Full Recipe' links. Markdown is rendered properly.",
+          "name": "Tailored Workflow & Visualization",
+          "description": "Add Mermaid-powered workflow diagrams and appliance-aware tailoring flows to the recipe detail experience.",
+          "status": "completed",
+          "completed_at": "2025-03-05",
+          "notes": "Delivered workflow tab with Mermaid renderer, SSE tailoring stream, TanStack Query caching, Worker mocks, updated README, and Vitest coverage.",
+          "success_criteria": "Workflow tab renders Mermaid diagrams with error states, tailoring streams appliance-specific instructions without losing base data, TanStack Query caches flowchart/tailoring results, Worker mocks expose /flowchart and /tailor endpoints, and accessibility remains WCAG 2.1 AA compliant.",
           "unit_tests": [
-            "Test recipe data extraction from AI response",
-            "Test RecipeCard component rendering",
-            "Test 'Add to List' button interaction",
-            "Test markdown rendering in recipe steps",
-            "Test recipe card click navigation"
+            "Render workflow tab and verify Mermaid summary copy",
+            "Tailor for my kitchen streams blocks and surfaces status",
+            "Selection controls toggle appliances for tailoring",
+            "Error payloads from SSE surface retry messaging",
+            "Flowchart fetch failure falls back to retry call-to-action"
           ],
           "cloudflare_implementation": {
-            "response_format": "Backend returns structured JSON when recipe found: {type: 'recipe', data: {...}}",
+            "endpoints": [
+              "GET /api/recipes/:id/flowchart returns Mermaid definition + metadata",
+              "POST /api/recipes/:id/tailor streams SSE blocks with retryable errors",
+              "GET /api/recipes/:id/tailor/history returns last cached run"
+            ],
             "best_practices": [
-              "Parse AI response to detect recipe data structure",
-              "Use TanStack Query mutation for 'Add to List' actions",
-              "Optimistically update UI when adding ingredients",
-              "Handle partial recipe data gracefully"
+              "Use ReadableStream to simulate SSE events",
+              "Persist tailored history per recipe + appliance signature",
+              "Expose recommended appliances + updatedAt metadata",
+              "Handle offline appliances with retryable error payloads"
             ]
           },
           "shadcn_implementation": {
-            "recipe_card_components": [
-              "card - Main recipe card container",
-              "card-header - Recipe title and image",
-              "card-content - Ingredients and steps",
-              "card-footer - Action buttons",
-              "badge - Tags for cuisine, diet, etc.",
-              "button - View full recipe, save, share",
-              "accordion - For collapsible ingredient sections",
-              "checkbox - For ingredient checklist"
+            "detail_components": [
+              "tabs - Ingredients / Instructions / Workflow / Equipment",
+              "badge - Appliance chips and refreshing indicators",
+              "button - Tailor for my kitchen + cancel actions",
+              "card - Workflow visualization and tailoring panels"
             ],
-            "markdown_rendering": "Use react-markdown library for rendering recipe instructions with proper formatting",
-            "best_practices": [
-              "Make recipe cards visually distinct from regular messages",
-              "Show recipe hero image if available",
-              "Group ingredients by prep phase in accordions",
-              "Provide quick actions: View Full, Save, Add Ingredients",
-              "Use badges for dietary tags and cuisine type",
-              "Make entire card clickable to view full recipe"
+            "accessibility": [
+              "Expose aria-live status messages for streaming updates",
+              "Maintain keyboard focus order between nested tabs",
+              "Ensure toggles announce aria-pressed state for appliance buttons"
             ]
           },
           "sub_tasks": [
-            {"id": "SUB-302-1", "status": "To Do", "description": "Create RecipeCard component with shadcn card"},
-            {"id": "SUB-302-2", "status": "To Do", "description": "Parse AI response to detect recipe data structure"},
-            {"id": "SUB-302-3", "status": "To Do", "description": "Conditionally render RecipeCard vs plain text message"},
-            {"id": "SUB-302-4", "status": "To Do", "description": "Implement 'Add Ingredients to List' with TanStack mutation"},
-            {"id": "SUB-302-5", "status": "To Do", "description": "Add markdown rendering for recipe steps using react-markdown"},
-            {"id": "SUB-302-6", "status": "To Do", "description": "Link recipe cards to full recipe detail page"}
+            {"id": "SUB-302-1", "status": "completed", "description": "Add workflow tab rendering GET /api/recipes/:id/flowchart with loading and retry states."},
+            {"id": "SUB-302-2", "status": "completed", "description": "Implement Tailor for my kitchen streaming UI with comparison view and aria-live messaging."},
+            {"id": "SUB-302-3", "status": "completed", "description": "Extend TanStack Query hooks with useRecipeFlowchart + useTailoredRecipe caching and status helpers."},
+            {"id": "SUB-302-4", "status": "completed", "description": "Build Worker mock endpoints for flowchart fetch and tailoring SSE with error scenarios."},
+            {"id": "SUB-302-5", "status": "completed", "description": "Verify WCAG compliance for visualization/tailoring interactions including focus, keyboard, and live updates."}
           ]
         }
       ]

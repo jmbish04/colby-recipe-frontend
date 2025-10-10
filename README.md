@@ -66,10 +66,10 @@ The design system is built with shadcn/ui primitives and a shared token layer:
 ## Recipe intelligence workspace
 
 - `src/routes/recipes/index.tsx` implements the recipe catalog with search, difficulty and tag filters, accessible cards, and optimistic CRUD flows backed by shadcn dialogs and alert confirmation banners.
-- `src/routes/recipes/detail.tsx` provides a tabbed recipe detail surface with WCAG-compliant navigation for ingredients, instructions, and equipment along with inline editing and deletion controls.
-- `src/hooks/useRecipes.ts` hosts the TanStack Query hooks (`useRecipes`, `useRecipeDetail`, and CRUD mutations) that manage optimistic caching across list/detail queries and surface consistent toast feedback.
-- Worker mocks in `worker/index.ts` now cover `/api/recipes` REST endpoints, including validation, optimistic-friendly timestamps, and queryable search/tag filters so the frontend can iterate without a live backend.
-- `src/routes/__tests__/recipes.test.tsx` adds Vitest coverage for the listing and detail experiences, ensuring the dialog-powered edits dispatch the correct Worker mutations and update the UI optimistically.
+- `src/routes/recipes/detail.tsx` provides a tabbed recipe detail surface with WCAG-compliant navigation for ingredients, instructions, equipment, and a new workflow visualization tab. The instructions view now includes "Tailor for my kitchen" streaming controls that surface live status updates, appliance toggles, and comparison tabs for original vs. tailored guidance.
+- `src/hooks/useRecipes.ts` hosts the TanStack Query hooks (`useRecipes`, `useRecipeDetail`, CRUD mutations) alongside new `useRecipeFlowchart` and `useTailoredRecipe` utilities that prefetch Mermaid diagrams, orchestrate SSE tailoring streams, and cache per-appliance results with optimistic status messaging.
+- Worker mocks in `worker/index.ts` now cover `/api/recipes` REST endpoints, dedicated `/flowchart` + `/tailor` extensions (including SSE simulation and retryable error cases), and `/kitchen/appliances` data so the frontend can iterate without a live backend.
+- `src/routes/__tests__/recipes.test.tsx` adds Vitest coverage for the listing, workflow visualization, and tailoring experiences, ensuring dialogs, streaming updates, and query mutations remain regression-safe.
 
 ## Project structure
 

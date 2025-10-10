@@ -48,3 +48,11 @@
 - Align tailoring UX language with existing toast deduplication keys to avoid duplicates.
 - Keep accessibility high-priority: ensure streamed updates announce progress via `aria-live` or inline status chips.
 - Coordinate Worker mock schema with backend expectations documented in EPIC-3 to minimize future integration friction.
+
+## Phase 6 Delivery Summary
+- [x] **SUB-302-1** – Added Workflow tab rendering Mermaid diagrams from `GET /api/recipes/:id/flowchart` with skeleton loading, retry messaging, and accessible fallbacks.
+- [x] **SUB-302-2** – Implemented "Tailor for my kitchen" streaming flow with appliance toggles, live status announcements, and comparison tabs for original vs. tailored instructions.
+- [x] **SUB-302-3** – Extended `useRecipeFlowchart` and `useTailoredRecipe` TanStack Query hooks with caching, SSE orchestration, and toast-aligned status helpers.
+- [x] **SUB-302-4** – Expanded Worker mocks to serve flowchart metadata plus tailoring SSE streams, history caching, and retryable error payloads.
+- [x] **SUB-302-5** – Validated WCAG 2.1 AA considerations for new visualization/tailoring UI (focus order, keyboard interaction, aria-live messaging).
+- Updated README, project task tracker, and prompt docs; added Vitest coverage for workflow/tailoring and npm scripts pass (`lint`, `test`, `build`, `wrangler deploy --dry-run`).
