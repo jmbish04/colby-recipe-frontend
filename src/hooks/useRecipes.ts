@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   useMutation,
   useQuery,
@@ -7,8 +8,9 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query'
 
-import { useApi } from '@/lib/api'
-import { showErrorToast, showInfoToast, showSuccessToast } from '@/lib/toast'
+import { ApiError, useApi } from '@/lib/api'
+import { streamApi } from '@/lib/streaming'
+import { showErrorToast, showInfoToast, showSuccessToast, showWarningToast } from '@/lib/toast'
 
 export type RecipeDifficulty = 'easy' | 'moderate' | 'advanced'
 
@@ -32,6 +34,38 @@ export interface RecipeDetail extends RecipeSummary {
   equipment: string[]
 }
 
+export interface RecipeFlowchart {
+  recipeId: string
+  mermaid: string
+  summary: string
+  updatedAt: string
+  recommendedAppliances: string[]
+}
+
+export type TailoredRunStatus = 'idle' | 'streaming' | 'complete' | 'error' | 'cancelled'
+
+export interface TailoredInstructionBlock {
+  id: string
+  title: string
+  content: string
+  applianceContext: string
+  order: number
+  durationMinutes?: number
+}
+
+export interface TailoredRecipeRun {
+  runId: string
+  recipeId: string
+  applianceIds: string[]
+  startedAt: string
+  completedAt?: string
+  status: TailoredRunStatus
+  summary?: string | null
+  recommendedAppliances?: string[]
+  blocks: TailoredInstructionBlock[]
+  errorMessage?: string | null
+}
+
 export interface RecipeFilters {
   search?: string
   difficulty?: RecipeDifficulty
@@ -43,6 +77,17 @@ const recipesListBaseKey = ['recipes', 'list'] as const
 export const recipeListKey = (filters: RecipeFilters = {}) => [...recipesListBaseKey, filters] as const
 
 export const recipeDetailKey = (recipeId: string) => ['recipes', 'detail', recipeId] as const
+
+export const recipeFlowchartKey = (recipeId: string) => ['recipes', 'flowchart', recipeId] as const
+
+const normalizeApplianceIds = (applianceIds: string[]) =>
+  [...new Set(applianceIds)].sort((a, b) => a.localeCompare(b))
+
+export const tailoredRecipeKey = (recipeId: string, applianceIds: string[]) => {
+  const normalized = normalizeApplianceIds(applianceIds)
+  const cacheKey = normalized.length > 0 ? normalized.join('|') : 'none'
+  return ['recipes', 'tailored', recipeId, cacheKey] as const
+}
 
 type RecipeListResult = UseQueryResult<RecipeSummary[]>
 
@@ -104,6 +149,281 @@ export function useRecipeDetail(recipeId: string | undefined): RecipeDetailResul
       return failureCount < 2
     },
   })
+}
+
+export interface RecipeFlowchartResult extends RecipeFlowchart {}
+
+export function useRecipeFlowchart(recipeId: string | undefined) {
+  const api = useApi()
+
+  return useQuery<RecipeFlowchart, Error>({
+    queryKey: recipeFlowchartKey(recipeId ?? 'unknown'),
+    queryFn: async () => {
+      if (!recipeId) {
+        throw new Error('Recipe identifier is required')
+      }
+
+      const response = await api.get<{ flowchart: RecipeFlowchart }>(`/api/recipes/${recipeId}/flowchart`)
+      return response.flowchart
+    },
+    enabled: Boolean(recipeId),
+    placeholderData: (previous) => previous,
+    gcTime: 1000 * 60 * 30,
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+interface TailoredRecipeOptions {
+  recipeId: string | undefined
+  applianceIds: string[]
+}
+
+interface TailoredRecipeHookResult {
+  data: TailoredRecipeRun | null
+  isStreaming: boolean
+  statusMessage: string | null
+  startTailoring: () => void
+  cancel: () => void
+  isPending: boolean
+}
+
+export function useTailoredRecipe({ recipeId, applianceIds }: TailoredRecipeOptions): TailoredRecipeHookResult {
+  const api = useApi()
+  const queryClient = useQueryClient()
+  const normalizedIds = useMemo(() => normalizeApplianceIds(applianceIds), [applianceIds])
+  const queryKey = useMemo(
+    () => tailoredRecipeKey(recipeId ?? 'unknown', normalizedIds),
+    [recipeId, normalizedIds],
+  )
+  const abortRef = useRef<AbortController | null>(null)
+  const [statusMessage, setStatusMessage] = useState<string | null>(null)
+  const [isStreaming, setIsStreaming] = useState(false)
+
+  const query = useQuery<TailoredRecipeRun | null, Error>({
+    queryKey,
+    queryFn: async () => {
+      if (!recipeId) {
+        throw new Error('Recipe identifier is required')
+      }
+
+      try {
+        const response = await api.get<{ history: TailoredRecipeRun | null }>(
+          `/api/recipes/${recipeId}/tailor/history`,
+          {
+            query: normalizedIds.length > 0 ? { appliances: normalizedIds.join(',') } : undefined,
+          },
+        )
+        return response.history
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          return null
+        }
+
+        throw error
+      }
+    },
+    enabled: false,
+    placeholderData: (previous) => previous ?? null,
+    gcTime: 1000 * 60 * 30,
+  })
+
+  useEffect(() => {
+    setStatusMessage(null)
+  }, [queryKey])
+
+  const updateRun = (updater: (run: TailoredRecipeRun) => TailoredRecipeRun) => {
+    queryClient.setQueryData<TailoredRecipeRun | null>(queryKey, (current) => {
+      if (!current) {
+        return current
+      }
+
+      return updater(current)
+    })
+  }
+
+  const mutation = useMutation<void, Error>({
+    mutationFn: async () => {
+      if (!recipeId) {
+        throw new Error('Recipe identifier is required')
+      }
+
+      const controller = new AbortController()
+      abortRef.current = controller
+
+      const run: TailoredRecipeRun = {
+        runId: `tailor-${crypto.randomUUID()}`,
+        recipeId,
+        applianceIds: normalizedIds,
+        startedAt: new Date().toISOString(),
+        status: 'streaming',
+        summary: null,
+        recommendedAppliances: [],
+        blocks: [],
+        errorMessage: null,
+      }
+
+      queryClient.setQueryData(queryKey, run)
+      setIsStreaming(true)
+      setStatusMessage('Tailoring instructions for your kitchen...')
+      showInfoToast('Tailoring instructions for your kitchen...', {
+        id: `info-tailor-${recipeId}`,
+      })
+
+      let streamError: Error | null = null
+
+      await streamApi(
+        `/api/recipes/${recipeId}/tailor`,
+        {
+          onEvent: ({ event, data }) => {
+            if (event === 'status') {
+              try {
+                const payload = JSON.parse(data) as { message?: string }
+                if (payload.message) {
+                  setStatusMessage(payload.message)
+                }
+              } catch {
+                setStatusMessage(data)
+              }
+              return
+            }
+
+            if (event === 'meta') {
+              try {
+                const payload = JSON.parse(data) as {
+                  summary?: string
+                  recommendedAppliances?: string[]
+                }
+                updateRun((current) => ({
+                  ...current,
+                  summary: payload.summary ?? current.summary,
+                  recommendedAppliances: payload.recommendedAppliances ?? current.recommendedAppliances,
+                }))
+              } catch {
+                // ignore malformed payloads
+              }
+              return
+            }
+
+            if (event === 'block') {
+              try {
+                const payload = JSON.parse(data) as TailoredInstructionBlock
+                updateRun((current) => {
+                  const nextBlocks = current.blocks.some((block) => block.id === payload.id)
+                    ? current.blocks
+                    : [...current.blocks, payload].sort((a, b) => a.order - b.order)
+                  return { ...current, blocks: nextBlocks }
+                })
+              } catch {
+                // ignore malformed payloads
+              }
+              return
+            }
+
+            if (event === 'error') {
+              try {
+                const payload = JSON.parse(data) as { message?: string; retryable?: boolean }
+                const message = payload.message ?? 'Tailoring failed'
+                streamError = new Error(message)
+                updateRun((current) => ({
+                  ...current,
+                  status: 'error',
+                  completedAt: new Date().toISOString(),
+                  errorMessage: message,
+                }))
+                setStatusMessage(message)
+                const toastId = payload.retryable ? `warning-tailor-${recipeId}` : `error-tailor-${recipeId}`
+                const showToast = payload.retryable ? showWarningToast : showErrorToast
+                showToast(message, { id: toastId })
+              } catch {
+                const message = data || 'Tailoring failed'
+                streamError = new Error(message)
+                updateRun((current) => ({
+                  ...current,
+                  status: 'error',
+                  completedAt: new Date().toISOString(),
+                  errorMessage: message,
+                }))
+                setStatusMessage(message)
+                showErrorToast(message, { id: `error-tailor-${recipeId}` })
+              }
+              setIsStreaming(false)
+              return
+            }
+
+            if (event === 'complete') {
+              const completedAt = new Date().toISOString()
+              updateRun((current) => ({
+                ...current,
+                status: 'complete',
+                completedAt,
+                errorMessage: null,
+              }))
+              setStatusMessage('Tailored instructions ready')
+              setIsStreaming(false)
+              showSuccessToast('Tailored instructions ready', {
+                id: `success-tailor-${recipeId}`,
+              })
+              return
+            }
+          },
+          onClose: () => {
+            abortRef.current = null
+          },
+        },
+        {
+          method: 'POST',
+          body: { appliances: normalizedIds },
+          signal: controller.signal,
+        },
+      )
+
+      if (streamError) {
+        throw streamError
+      }
+    },
+    onError: (error) => {
+      if (error.name === 'AbortError') {
+        return
+      }
+
+      setIsStreaming(false)
+      setStatusMessage(error.message)
+      updateRun((current) => ({
+        ...current,
+        status: 'error',
+        completedAt: current.completedAt ?? new Date().toISOString(),
+        errorMessage: error.message,
+      }))
+      showErrorToast(error.message, { id: `error-tailor-${recipeId}` })
+    },
+    onSettled: () => {
+      abortRef.current = null
+    },
+  })
+
+  const cancel = () => {
+    const controller = abortRef.current
+    if (controller) {
+      controller.abort()
+      setIsStreaming(false)
+      setStatusMessage('Tailoring cancelled')
+      updateRun((current) => ({
+        ...current,
+        status: 'cancelled',
+        completedAt: new Date().toISOString(),
+      }))
+      showInfoToast('Tailoring cancelled', { id: `info-tailor-cancel-${recipeId}` })
+    }
+  }
+
+  return {
+    data: query.data ?? null,
+    isStreaming,
+    statusMessage,
+    startTailoring: () => mutation.mutate(),
+    cancel,
+    isPending: mutation.isPending,
+  }
 }
 
 export interface RecipePayload {

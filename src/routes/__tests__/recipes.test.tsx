@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import RecipesRoute from '@/routes/recipes'
 import RecipeDetailRoute from '@/routes/recipes/detail'
-import type { RecipeDetail, RecipePayload, RecipeSummary } from '@/hooks/useRecipes'
+import type { RecipeDetail, RecipeFlowchart, RecipePayload, RecipeSummary } from '@/hooks/useRecipes'
 
 const now = new Date('2025-03-01T12:00:00.000Z').toISOString()
 
@@ -30,6 +30,14 @@ const recipeDetail: RecipeDetail = {
   ingredients: ['500g flour', '10g salt', '320g water'],
   instructions: ['Mix ingredients', 'Ferment for 3 hours', 'Bake with steam'],
   equipment: ['Steam oven', 'Dutch oven'],
+}
+
+const flowchartDetail: RecipeFlowchart = {
+  recipeId: recipeDetail.id,
+  mermaid: ['graph TD', '  A[Start] --> B[Finish]'].join('\n'),
+  summary: 'Shows prep, proof, and steam finish cadence.',
+  updatedAt: now,
+  recommendedAppliances: ['Anova Precision Oven'],
 }
 
 describe('Recipes routes', () => {
@@ -56,6 +64,13 @@ describe('Recipes routes', () => {
         })
       }
 
+      if (url.pathname === `/api/recipes/${recipeDetail.id}/flowchart` && method === 'GET') {
+        return new Response(JSON.stringify({ flowchart: flowchartDetail }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        })
+      }
+
       if (url.pathname === `/api/recipes/${recipeDetail.id}` && method === 'PUT') {
         const body = JSON.parse(await request.text()) as RecipePayload
         recipeDetail.title = body.title
@@ -66,11 +81,68 @@ describe('Recipes routes', () => {
         })
       }
 
+      if (url.pathname === `/api/recipes/${recipeDetail.id}/tailor` && method === 'POST') {
+        const encoder = new TextEncoder()
+        const stream = new ReadableStream({
+          start(controller) {
+            const send = (event: string, data: unknown) => {
+              controller.enqueue(encoder.encode(`event: ${event}\n` + `data: ${JSON.stringify(data)}\n\n`))
+            }
+
+            send('meta', {
+              summary: 'Tailored run ready',
+              recommendedAppliances: ['Steam oven'],
+            })
+            send('block', {
+              id: 'block-1',
+              title: 'Steam oven prep',
+              content: 'Preheat steam oven to 218°C with full humidity.',
+              applianceContext: 'Steam oven',
+              order: 1,
+              durationMinutes: 20,
+            })
+            send('complete', { message: 'Tailoring complete' })
+            controller.close()
+          },
+        })
+
+        return new Response(stream, {
+          status: 200,
+          headers: { 'content-type': 'text/event-stream' },
+        })
+      }
+
       if (url.pathname === `/api/recipes/${recipeDetail.id}` && method === 'DELETE') {
         return new Response(JSON.stringify({ ok: true }), {
           status: 200,
           headers: { 'content-type': 'application/json' },
         })
+      }
+
+      if (url.pathname === '/api/kitchen/appliances' && method === 'GET') {
+        return new Response(
+          JSON.stringify({
+            appliances: [
+              {
+                id: 'appliance-001',
+                brand: 'Anova',
+                model: 'Precision Oven',
+                nickname: 'Steam oven',
+                status: 'ready',
+                uploadedAt: now,
+                updatedAt: now,
+                manualFileName: 'anova.pdf',
+                manualUrl: 'https://example.com/manual.pdf',
+                processingProgress: 100,
+                statusDetail: null,
+              },
+            ],
+          }),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          },
+        )
       }
 
       return new Response(JSON.stringify({ message: 'Not found' }), { status: 404 })
@@ -118,7 +190,7 @@ describe('Recipes routes', () => {
     expect(wasCalled('GET', '/api/recipes')).toBe(true)
   })
 
-  it('shows recipe details with tabbed content and allows editing title', async () => {
+  it('shows recipe details with workflow visualization and tailoring', async () => {
     const user = userEvent.setup()
 
     renderWithProviders(
@@ -133,6 +205,9 @@ describe('Recipes routes', () => {
     const instructionSteps = await screen.findAllByText(/mix ingredients/i)
     expect(instructionSteps.length).toBeGreaterThan(0)
 
+    await user.click(screen.getByRole('tab', { name: /workflow/i }))
+    expect(await screen.findByText(/Shows prep, proof, and steam finish cadence/i)).toBeInTheDocument()
+
     await user.click(screen.getByRole('button', { name: /edit/i }))
     const titleInput = await screen.findByLabelText('Title')
     await user.clear(titleInput)
@@ -144,5 +219,11 @@ describe('Recipes routes', () => {
     })
 
     expect(await screen.findByRole('heading', { name: 'Updated Steam Bread' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('tab', { name: /instructions/i }))
+    await user.click(screen.getByRole('button', { name: /tailor for my kitchen/i }))
+    expect(await screen.findByText(/Steam oven prep/)).toBeInTheDocument()
+    const tailoredTab = screen.getByRole('tab', { name: /tailored plan/i })
+    expect(tailoredTab).toHaveAttribute('data-state', 'active')
   })
 })

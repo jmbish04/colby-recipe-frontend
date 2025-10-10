@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Eye, Loader2, Pencil, Plus, Search, Trash2 } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 
 import { RecipeEditorDialog } from '@/components/recipes/recipe-editor-dialog'
 import { Badge } from '@/components/ui/badge'
@@ -20,15 +21,18 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
+  recipeFlowchartKey,
   useCreateRecipeMutation,
   useDeleteRecipeMutation,
   useRecipeDetail,
   useRecipes,
   useUpdateRecipeMutation,
   type RecipeDifficulty,
+  type RecipeFlowchart,
   type RecipePayload,
   type RecipeSummary,
 } from '@/hooks/useRecipes'
+import { useApi } from '@/lib/api'
 
 const difficultyLabels: Record<RecipeDifficulty, string> = {
   easy: 'Easy',
@@ -51,6 +55,8 @@ function formatMinutes(minutes: number) {
 }
 
 export default function RecipesRoute() {
+  const queryClient = useQueryClient()
+  const api = useApi()
   const [searchTerm, setSearchTerm] = useState('')
   const [activeSearch, setActiveSearch] = useState('')
   const [difficulty, setDifficulty] = useState<RecipeDifficulty | undefined>(undefined)
@@ -84,6 +90,21 @@ export default function RecipesRoute() {
 
   const editingRecipeQuery = useRecipeDetail(editingId ?? undefined)
   const recipes = useMemo(() => recipesQuery.data ?? [], [recipesQuery.data])
+
+  const prefetchFlowchart = useCallback(
+    (id: string) => {
+      if (!id) return
+      void queryClient.prefetchQuery({
+        queryKey: recipeFlowchartKey(id),
+        queryFn: async () => {
+          const response = await api.get<{ flowchart: RecipeFlowchart }>(`/api/recipes/${id}/flowchart`)
+          return response.flowchart
+        },
+        staleTime: 1000 * 60 * 5,
+      })
+    },
+    [api, queryClient],
+  )
 
   const availableTags = useMemo(() => {
     const tagSet = new Set<string>()
@@ -241,6 +262,7 @@ export default function RecipesRoute() {
               recipe={recipe}
               onEdit={() => setEditingId(recipe.id)}
               onDelete={() => setDeleteTargetId(recipe.id)}
+              onPrefetch={prefetchFlowchart}
             />
           ))}
         </div>
@@ -292,9 +314,10 @@ interface RecipeCardProps {
   recipe: RecipeSummary
   onEdit: () => void
   onDelete: () => void
+  onPrefetch: (id: string) => void
 }
 
-function RecipeCard({ recipe, onEdit, onDelete }: RecipeCardProps) {
+function RecipeCard({ recipe, onEdit, onDelete, onPrefetch }: RecipeCardProps) {
   return (
     <Card role="listitem" className="flex h-full flex-col border-border/60 bg-card/60">
       <CardHeader className="space-y-3">
@@ -346,7 +369,12 @@ function RecipeCard({ recipe, onEdit, onDelete }: RecipeCardProps) {
       </CardContent>
       <CardFooter className="flex flex-wrap gap-2">
         <Button variant="secondary" size="sm" asChild>
-          <Link to={`/recipes/${recipe.id}`} aria-label={`View ${recipe.title}`}>
+          <Link
+            to={`/recipes/${recipe.id}`}
+            aria-label={`View ${recipe.title}`}
+            onMouseEnter={() => onPrefetch(recipe.id)}
+            onFocus={() => onPrefetch(recipe.id)}
+          >
             <Eye className="mr-2 h-4 w-4" aria-hidden="true" /> View
           </Link>
         </Button>

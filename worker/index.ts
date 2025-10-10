@@ -51,6 +51,39 @@ const MANUAL_CDN_BASE = 'https://manuals.menuforge.app'
 
 const recipesStore = new Map<string, RecipeRecord>()
 
+interface RecipeFlowchartRecord {
+  recipeId: string
+  mermaid: string
+  summary: string
+  updatedAt: string
+  recommendedAppliances: string[]
+}
+
+interface TailoredInstructionBlockRecord {
+  id: string
+  title: string
+  content: string
+  applianceContext: string
+  order: number
+  durationMinutes?: number
+}
+
+interface TailoredRecipeRunRecord {
+  runId: string
+  recipeId: string
+  applianceIds: string[]
+  startedAt: string
+  completedAt?: string
+  status: 'streaming' | 'complete' | 'error'
+  summary: string
+  recommendedAppliances: string[]
+  blocks: TailoredInstructionBlockRecord[]
+  errorMessage?: string
+}
+
+const recipeFlowchartStore = new Map<string, RecipeFlowchartRecord>()
+const tailorHistoryStore = new Map<string, TailoredRecipeRunRecord[]>()
+
 type JsonValue = Record<string, unknown> | Array<unknown> | string | number | boolean | null
 
 function jsonResponse(data: JsonValue, init?: ResponseInit) {
@@ -346,6 +379,218 @@ function ensureSeedRecipes() {
   })
 }
 
+function ensureSeedFlowcharts() {
+  ensureSeedRecipes()
+  ensureSeedAppliances()
+
+  if (recipeFlowchartStore.size > 0) {
+    return
+  }
+
+  const now = new Date().toISOString()
+
+  recipeFlowchartStore.set('recipe-precision-bread', {
+    recipeId: 'recipe-precision-bread',
+    mermaid: [
+      'graph TD',
+      '  start([Activate yeast]) --> mix[Mix & Fold]',
+      '  mix --> proof[Bulk proof with folds]',
+      '  proof --> pan[Oil pan & shape dough]',
+      '  pan --> steamBake[Steam bake 20 min]',
+      '  steamBake --> finish[Dry heat finish 5 min]',
+      '  finish --> rest[Rest & Slice]',
+    ].join('\n'),
+    summary: 'Visualizes mixing, proofing, and staged steam baking for the focaccia.',
+    updatedAt: now,
+    recommendedAppliances: ['Anova Precision Oven'],
+  })
+
+  recipeFlowchartStore.set('recipe-induction-risotto', {
+    recipeId: 'recipe-induction-risotto',
+    mermaid: [
+      'graph TD',
+      '  prep([Warm stock & infuse saffron]) --> saute[Saute shallot + rice]',
+      '  saute --> deglaze[Deglaze with wine]',
+      '  deglaze --> ladder[Ladle stock & stir loop]',
+      '  ladder --> finish[Finish with butter & cheese]',
+      '  finish --> serve[Serve immediately]',
+    ].join('\n'),
+    summary: 'Captures stock management, induction heat control, and finishing emulsion timing.',
+    updatedAt: now,
+    recommendedAppliances: ['Breville Control Freak'],
+  })
+
+  recipeFlowchartStore.set('recipe-grill-vegetables', {
+    recipeId: 'recipe-grill-vegetables',
+    mermaid: [
+      'graph TD',
+      '  marinate([Marinate vegetables]) --> preheat[Preheat grill insert]',
+      '  preheat --> batch1[Grill peppers & onions]',
+      '  batch1 --> batch2[Grill zucchini & mushrooms]',
+      '  batch2 --> rest[Rest & finish with marinade]',
+      '  rest --> plate[Plate & serve]',
+    ].join('\n'),
+    summary: 'Shows marinade staging, grill batches, and finishing drizzle for charred vegetables.',
+    updatedAt: now,
+    recommendedAppliances: ['Smart grill insert'],
+  })
+}
+
+function formatApplianceLabel(applianceId: string) {
+  ensureSeedAppliances()
+  const record = appliancesStore.get(applianceId)
+  if (!record) {
+    return applianceId
+  }
+
+  if (record.nickname) {
+    return record.nickname
+  }
+
+  return `${record.brand} ${record.model}`
+}
+
+function getTailorHistoryKey(recipeId: string, appliances: string[]) {
+  const normalized = Array.from(new Set(appliances)).sort((a, b) => a.localeCompare(b))
+  return `${recipeId}::${normalized.join('|') || 'none'}`
+}
+
+function persistTailorHistory(run: TailoredRecipeRunRecord) {
+  const key = getTailorHistoryKey(run.recipeId, run.applianceIds)
+  const history = tailorHistoryStore.get(key) ?? []
+  const snapshot: TailoredRecipeRunRecord = {
+    ...run,
+    blocks: run.blocks.map((block) => ({ ...block })),
+    recommendedAppliances: [...run.recommendedAppliances],
+    applianceIds: [...run.applianceIds],
+  }
+
+  history.push(snapshot)
+  if (history.length > 5) {
+    history.shift()
+  }
+
+  tailorHistoryStore.set(key, history)
+}
+
+function buildTailorSummary(recipe: RecipeRecord, appliances: string[], blockCount: number) {
+  const labels = appliances.map((appliance) => formatApplianceLabel(appliance))
+  if (labels.length === 0) {
+    return `Personalized guidance generated for ${recipe.title}.`
+  }
+
+  if (labels.length === 1) {
+    return `${recipe.title} tuned for ${labels[0]} with ${blockCount} guided segments.`
+  }
+
+  const last = labels.pop()
+  const prefix = labels.join(', ')
+  return `${recipe.title} coordinated across ${prefix} and ${last} with ${blockCount} guided segments.`
+}
+
+function createTailoredBlocks(
+  recipe: RecipeRecord,
+  appliances: string[],
+): TailoredInstructionBlockRecord[] {
+  const primary = formatApplianceLabel(appliances[0] ?? 'appliance-001')
+  const secondary = appliances[1] ? formatApplianceLabel(appliances[1]) : null
+
+  if (recipe.id === 'recipe-precision-bread') {
+    return [
+      {
+        id: `${recipe.id}-block-1`,
+        title: 'Steam oven prep',
+        content: `Preheat ${primary} on steam mode to 218°C. Use 100% steam for the first stage.`,
+        applianceContext: primary,
+        order: 1,
+        durationMinutes: 15,
+      },
+      {
+        id: `${recipe.id}-block-2`,
+        title: 'Bulk proof reminders',
+        content: 'Schedule coil folds every 30 minutes and oil the pan 10 minutes before shaping.',
+        applianceContext: secondary ?? primary,
+        order: 2,
+        durationMinutes: 60,
+      },
+      {
+        id: `${recipe.id}-block-3`,
+        title: 'Steam & finish cycle',
+        content: 'Bake 20 minutes on full steam, then vent and switch to dry heat for 5 minutes to crisp.',
+        applianceContext: primary,
+        order: 3,
+        durationMinutes: 25,
+      },
+    ]
+  }
+
+  if (recipe.id === 'recipe-induction-risotto') {
+    return [
+      {
+        id: `${recipe.id}-block-1`,
+        title: 'Stock station',
+        content: `Hold saffron-infused stock at 82°C on ${secondary ?? 'a secondary burner'} for quick ladling.`,
+        applianceContext: secondary ?? primary,
+        order: 1,
+        durationMinutes: 10,
+      },
+      {
+        id: `${recipe.id}-block-2`,
+        title: 'Induction stir cadence',
+        content: `Set ${primary} to 135°C sauté mode. Stir continuously with 45-second resting intervals.`,
+        applianceContext: primary,
+        order: 2,
+        durationMinutes: 18,
+      },
+      {
+        id: `${recipe.id}-block-3`,
+        title: 'Finish & rest',
+        content: 'Lower heat to 93°C, fold in butter and cheese, then rest uncovered for 2 minutes.',
+        applianceContext: primary,
+        order: 3,
+        durationMinutes: 5,
+      },
+    ]
+  }
+
+  if (recipe.id === 'recipe-grill-vegetables') {
+    return [
+      {
+        id: `${recipe.id}-block-1`,
+        title: 'High-heat preheat',
+        content: `Bring ${primary} to 260°C. Keep grill lid closed to stabilize radiant heat.`,
+        applianceContext: primary,
+        order: 1,
+        durationMinutes: 8,
+      },
+      {
+        id: `${recipe.id}-block-2`,
+        title: 'Batch control',
+        content: 'Start peppers and onions first, then lower zone temperature 15°C for zucchini and mushrooms.',
+        applianceContext: primary,
+        order: 2,
+        durationMinutes: 12,
+      },
+      {
+        id: `${recipe.id}-block-3`,
+        title: 'Finish & baste',
+        content: 'Rest vegetables on a warming rack and baste with reserved marinade before plating.',
+        applianceContext: secondary ?? primary,
+        order: 3,
+        durationMinutes: 5,
+      },
+    ]
+  }
+
+  return recipe.instructions.map((instruction, index) => ({
+    id: `${recipe.id}-block-${index + 1}`,
+    title: `Step ${index + 1}`,
+    content: instruction,
+    applianceContext: primary,
+    order: index + 1,
+  }))
+}
+
 function listRecipes({
   search,
   difficulty,
@@ -501,6 +746,146 @@ async function handleGetRecipe(request: Request, recipeId: string) {
   }
 
   return jsonResponse({ recipe: serializeRecipeDetail(record) })
+}
+
+async function handleGetRecipeFlowchart(request: Request, recipeId: string) {
+  if (request.method !== 'GET') {
+    return errorResponse(405, 'Method Not Allowed')
+  }
+
+  ensureSeedFlowcharts()
+  const record = recipeFlowchartStore.get(recipeId)
+
+  if (!record) {
+    return errorResponse(404, 'Flowchart not found')
+  }
+
+  return jsonResponse({ flowchart: record })
+}
+
+async function handleTailorRecipe(request: Request, recipeId: string) {
+  if (request.method !== 'POST') {
+    return errorResponse(405, 'Method Not Allowed')
+  }
+
+  ensureSeedRecipes()
+  ensureSeedAppliances()
+
+  const recipe = recipesStore.get(recipeId)
+
+  if (!recipe) {
+    return errorResponse(404, 'Recipe not found')
+  }
+
+  const body = (await parseJsonBody<unknown>(request)) ?? {}
+  const payload = body as { appliances?: unknown; applianceIds?: unknown }
+  const candidate = Array.isArray(payload.appliances)
+    ? payload.appliances
+    : Array.isArray(payload.applianceIds)
+      ? payload.applianceIds
+      : []
+  const appliances = Array.isArray(candidate)
+    ? candidate.filter((value): value is string => typeof value === 'string')
+    : []
+  const normalized = Array.from(new Set(appliances))
+  const applianceIds = normalized.length > 0 ? normalized : ['appliance-001']
+
+  const blocks = createTailoredBlocks(recipe, applianceIds)
+  const run: TailoredRecipeRunRecord = {
+    runId: `tailor-${crypto.randomUUID()}`,
+    recipeId,
+    applianceIds,
+    startedAt: new Date().toISOString(),
+    status: 'streaming',
+    summary: buildTailorSummary(recipe, applianceIds, blocks.length),
+    recommendedAppliances: applianceIds.map((appliance) => formatApplianceLabel(appliance)),
+    blocks: [],
+  }
+
+  const encoder = new TextEncoder()
+
+  return new Response(
+    new ReadableStream({
+      start(controller) {
+        const send = (event: string, data: unknown) => {
+          controller.enqueue(encoder.encode(`event: ${event}\n` + `data: ${JSON.stringify(data)}\n\n`))
+        }
+
+        send('meta', {
+          summary: run.summary,
+          recommendedAppliances: run.recommendedAppliances,
+        })
+        send('status', { message: 'Calibrating appliance offsets…' })
+
+        if (applianceIds.includes('appliance-003')) {
+          setTimeout(() => {
+            run.status = 'error'
+            run.completedAt = new Date().toISOString()
+            run.errorMessage = 'Lab test unit is offline. Retry once it reconnects.'
+            send('error', { message: run.errorMessage, retryable: true })
+            persistTailorHistory(run)
+            controller.close()
+          }, 700)
+          return
+        }
+
+        if (blocks.length === 0) {
+          run.status = 'complete'
+          run.completedAt = new Date().toISOString()
+          send('complete', { message: 'Tailoring complete' })
+          persistTailorHistory(run)
+          controller.close()
+          return
+        }
+
+        blocks.forEach((block, index) => {
+          const delay = 650 * (index + 1)
+          setTimeout(() => {
+            run.blocks.push(block)
+            send('block', block)
+            send('status', { message: `Customizing step ${index + 1} of ${blocks.length}…` })
+
+            if (index === blocks.length - 1) {
+              run.status = 'complete'
+              run.completedAt = new Date().toISOString()
+              send('complete', { message: 'Tailoring complete' })
+              persistTailorHistory(run)
+              controller.close()
+            }
+          }, delay)
+        })
+      },
+      cancel() {
+        if (run.status === 'streaming') {
+          run.status = 'error'
+          run.completedAt = new Date().toISOString()
+          run.errorMessage = 'Tailoring cancelled by client.'
+          persistTailorHistory(run)
+        }
+      },
+    }),
+    {
+      headers: {
+        'content-type': 'text/event-stream',
+        'cache-control': 'no-store',
+      },
+    },
+  )
+}
+
+async function handleGetTailorHistory(request: Request, recipeId: string) {
+  if (request.method !== 'GET') {
+    return errorResponse(405, 'Method Not Allowed')
+  }
+
+  const url = new URL(request.url)
+  const appliancesParam = url.searchParams.get('appliances')
+  const appliances = appliancesParam ? appliancesParam.split(',').filter(Boolean) : []
+  const key = getTailorHistoryKey(recipeId, appliances)
+  const history = tailorHistoryStore.get(key) ?? []
+  const latest = history.length > 0 ? history[history.length - 1] : null
+
+  return jsonResponse({ history: latest })
 }
 
 async function handleCreateRecipe(request: Request) {
@@ -958,10 +1343,30 @@ export default {
     }
 
     if (url.pathname.startsWith(`${API_PREFIX}/recipes/`)) {
-      const recipeId = url.pathname.slice(`${API_PREFIX}/recipes/`.length)
+      const segments = url.pathname.slice(`${API_PREFIX}/recipes/`.length).split('/').filter(Boolean)
+      const recipeId = segments[0]
 
       if (!recipeId) {
         return errorResponse(404, 'Recipe not found')
+      }
+
+      const action = segments[1]
+
+      if (action === 'flowchart') {
+        return handleGetRecipeFlowchart(request, recipeId)
+      }
+
+      if (action === 'tailor') {
+        const subAction = segments[2]
+        if (subAction === 'history') {
+          return handleGetTailorHistory(request, recipeId)
+        }
+
+        return handleTailorRecipe(request, recipeId)
+      }
+
+      if (segments.length > 1) {
+        return errorResponse(404, 'Endpoint not implemented in mock worker')
       }
 
       if (request.method === 'GET') {

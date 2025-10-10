@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Loader2, Pencil, UtensilsCrossed } from 'lucide-react'
+import { ArrowLeft, Loader2, Pencil, Sparkles, UtensilsCrossed } from 'lucide-react'
 
 import { RecipeEditorDialog } from '@/components/recipes/recipe-editor-dialog'
+import { MermaidDiagram } from '@/components/recipes/mermaid-diagram'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,10 +11,13 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   useDeleteRecipeMutation,
+  useRecipeFlowchart,
   useRecipeDetail,
+  useTailoredRecipe,
   useUpdateRecipeMutation,
   type RecipePayload,
 } from '@/hooks/useRecipes'
+import { useAppliancesQuery } from '@/hooks/useAppliances'
 import { showWarningToast } from '@/lib/toast'
 
 export default function RecipeDetailRoute() {
@@ -28,6 +32,39 @@ export default function RecipeDetailRoute() {
   const deleteRecipe = useDeleteRecipeMutation()
 
   const recipe = recipeQuery.data
+  const flowchartQuery = useRecipeFlowchart(recipeId)
+  const appliancesQuery = useAppliancesQuery()
+  const readyAppliances = useMemo(
+    () => (appliancesQuery.data ?? []).filter((appliance) => appliance.status === 'ready'),
+    [appliancesQuery.data],
+  )
+  const [selectedAppliances, setSelectedAppliances] = useState<string[]>([])
+  const tailored = useTailoredRecipe({ recipeId, applianceIds: selectedAppliances })
+  const tailoredData = tailored.data
+  const [instructionView, setInstructionView] = useState<'original' | 'tailored'>('original')
+
+  useEffect(() => {
+    setSelectedAppliances((current) => {
+      if (readyAppliances.length === 0) {
+        return []
+      }
+
+      const availableIds = readyAppliances.map((appliance) => appliance.id)
+      const filtered = current.filter((id) => availableIds.includes(id))
+
+      if (filtered.length > 0) {
+        return filtered
+      }
+
+      return availableIds
+    })
+  }, [readyAppliances])
+
+  useEffect(() => {
+    if (tailoredData && tailoredData.status === 'complete' && tailoredData.blocks.length > 0) {
+      setInstructionView('tailored')
+    }
+  }, [tailoredData])
 
   const metaItems = useMemo(() => {
     if (!recipe) return []
@@ -39,6 +76,14 @@ export default function RecipeDetailRoute() {
       { label: 'Last updated', value: new Date(recipe.updatedAt).toLocaleString() },
     ]
   }, [recipe])
+
+  const toggleApplianceSelection = (applianceId: string) => {
+    setSelectedAppliances((current) =>
+      current.includes(applianceId)
+        ? current.filter((id) => id !== applianceId)
+        : [...current, applianceId],
+    )
+  }
 
   const handleUpdate = (payload: RecipePayload) => {
     updateRecipe.mutate(
@@ -174,6 +219,7 @@ export default function RecipeDetailRoute() {
         <TabsList className="w-full justify-start overflow-x-auto">
           <TabsTrigger value="ingredients">Ingredients</TabsTrigger>
           <TabsTrigger value="instructions">Instructions</TabsTrigger>
+          <TabsTrigger value="workflow">Workflow</TabsTrigger>
           <TabsTrigger value="equipment">Equipment</TabsTrigger>
         </TabsList>
         <TabsContent value="ingredients">
@@ -195,14 +241,216 @@ export default function RecipeDetailRoute() {
           <Card className="border-border/60 bg-card/60">
             <CardHeader>
               <CardTitle className="text-base">Instructions</CardTitle>
-              <CardDescription>Steps are orchestrated across connected appliances in guided cook mode.</CardDescription>
+              <CardDescription>
+                Steps are orchestrated across connected appliances in guided cook mode. Tailor them to match your
+                setup.
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <ol className="list-decimal space-y-3 pl-6 text-sm">
-                {recipe.instructions.map((step, index) => (
-                  <li key={`${index}-${step}`}>{step}</li>
-                ))}
-              </ol>
+            <CardContent className="space-y-6">
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-sm font-medium text-foreground">Select appliances for tailoring</p>
+                  {appliancesQuery.isFetching && (
+                    <Badge variant="outline" className="text-xs">
+                      Refreshing
+                    </Badge>
+                  )}
+                </div>
+                {appliancesQuery.isError && (
+                  <p
+                    role="alert"
+                    className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive"
+                  >
+                    We couldn&apos;t load your appliances. Tailoring may be limited until the hub reconnects.
+                  </p>
+                )}
+                {appliancesQuery.isLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading connected appliances…</p>
+                ) : readyAppliances.length === 0 ? (
+                  <p className="rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                    Connect a ready appliance in the Smart Kitchen Hub to personalize steps.
+                  </p>
+                ) : (
+                  <div
+                    role="group"
+                    aria-label="Appliances available for tailoring"
+                    className="flex flex-wrap gap-2"
+                  >
+                    {readyAppliances.map((appliance) => {
+                      const label = appliance.nickname ?? `${appliance.brand} ${appliance.model}`
+                      const isSelected = selectedAppliances.includes(appliance.id)
+                      return (
+                        <Button
+                          key={appliance.id}
+                          variant={isSelected ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => toggleApplianceSelection(appliance.id)}
+                          aria-pressed={isSelected}
+                          className="min-w-[120px] justify-center"
+                        >
+                          {label}
+                        </Button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  onClick={() => tailored.startTailoring()}
+                  disabled={selectedAppliances.length === 0 || tailored.isPending || tailored.isStreaming}
+                >
+                  {tailored.isStreaming ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Sparkles className="mr-2 h-4 w-4" aria-hidden="true" />
+                  )}
+                  Tailor for my kitchen
+                </Button>
+                <Button variant="outline" onClick={tailored.cancel} disabled={!tailored.isStreaming}>
+                  Cancel
+                </Button>
+                {tailored.statusMessage && (
+                  <span role="status" aria-live="polite" className="text-sm text-muted-foreground">
+                    {tailored.statusMessage}
+                  </span>
+                )}
+              </div>
+              <span className="sr-only" role="status" aria-live="assertive">
+                {tailored.statusMessage ?? ''}
+              </span>
+
+              <Tabs
+                value={instructionView}
+                onValueChange={(value) => setInstructionView(value as 'original' | 'tailored')}
+                className="space-y-4"
+              >
+                <TabsList className="w-full justify-start overflow-x-auto">
+                  <TabsTrigger value="original">Original plan</TabsTrigger>
+                  <TabsTrigger
+                    value="tailored"
+                    disabled={!tailoredData || tailoredData.blocks.length === 0}
+                  >
+                    Tailored plan
+                    {tailored.isStreaming && (
+                      <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                        Live
+                      </span>
+                    )}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="original">
+                  <ol className="list-decimal space-y-3 pl-6 text-sm">
+                    {recipe.instructions.map((step, index) => (
+                      <li key={`${index}-${step}`}>{step}</li>
+                    ))}
+                  </ol>
+                </TabsContent>
+                <TabsContent value="tailored">
+                  {tailored.isStreaming && (
+                    <div
+                      className="mb-4 flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm text-primary"
+                      role="status"
+                      aria-live="assertive"
+                    >
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      Streaming personalized steps…
+                    </div>
+                  )}
+                  {tailoredData?.status === 'error' ? (
+                    <div className="space-y-3 text-sm">
+                      <p className="text-muted-foreground">
+                        {tailoredData.errorMessage ?? 'We were unable to tailor this recipe for your kitchen.'}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => tailored.startTailoring()}
+                          disabled={tailored.isPending || tailored.isStreaming}
+                        >
+                          Retry tailoring
+                        </Button>
+                      </div>
+                    </div>
+                  ) : tailoredData?.blocks.length ? (
+                    <ol className="list-decimal space-y-4 pl-6 text-sm">
+                      {tailoredData.blocks.map((block) => (
+                        <li key={block.id} className="space-y-1.5">
+                          <div className="font-medium text-foreground">{block.title}</div>
+                          <p className="text-muted-foreground">{block.content}</p>
+                          <div className="text-xs uppercase tracking-wide text-muted-foreground/80">
+                            Optimized for {block.applianceContext}
+                            {block.durationMinutes ? ` • ${block.durationMinutes} min` : null}
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Tailored instructions will appear here once generated for your selected appliances.
+                    </p>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="workflow">
+          <Card className="border-border/60 bg-card/60">
+            <CardHeader className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="text-base">Workflow orchestration</CardTitle>
+                  <CardDescription>
+                    Visualize how this recipe coordinates timing, appliances, and prep windows.
+                  </CardDescription>
+                </div>
+                {flowchartQuery.isFetching && (
+                  <Badge variant="outline" className="text-xs">
+                    Refreshing
+                  </Badge>
+                )}
+              </div>
+              {flowchartQuery.data?.recommendedAppliances?.length ? (
+                <div className="flex flex-wrap gap-2 text-xs" aria-label="Recommended starting appliances">
+                  {flowchartQuery.data.recommendedAppliances.map((appliance) => (
+                    <Badge key={appliance} variant="secondary">
+                      {appliance}
+                    </Badge>
+                  ))}
+                </div>
+              ) : null}
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {flowchartQuery.isLoading || flowchartQuery.isPending ? (
+                <Skeleton className="h-[320px] w-full rounded-2xl" />
+              ) : flowchartQuery.isError || !flowchartQuery.data ? (
+                <div className="space-y-3 text-sm text-muted-foreground" role="alert">
+                  <p>We couldn&apos;t load the workflow diagram. Try again shortly.</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => flowchartQuery.refetch()}
+                    disabled={flowchartQuery.isFetching}
+                  >
+                    {flowchartQuery.isFetching && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                    Retry
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground">{flowchartQuery.data.summary}</p>
+                  <MermaidDiagram
+                    definition={flowchartQuery.data.mermaid}
+                    summary={flowchartQuery.data.summary}
+                    className="min-h-[320px]"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Last updated {new Date(flowchartQuery.data.updatedAt).toLocaleString()}
+                  </p>
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
