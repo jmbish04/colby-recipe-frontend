@@ -429,6 +429,9 @@
           "id": "TASK-302",
           "name": "Implement Generative Recipe Card UI in Chat",
           "description": "Parse AI responses and dynamically render interactive recipe cards within the chat. Support contextual actions on ingredients and recipes.",
+          "status": "completed",
+          "completedDate": "2025-10-08",
+          "notes": "Delivered a generative RecipeCard with shadcn accordions, ingredient checklists, TanStack Query shopping-list mutation, and chat routing that parses AI recipe payloads. Worker mocks now expose /api/shopping-list and README/docs updated accordingly.",
           "success_criteria": "AI responses containing recipes render as rich cards. Ingredients have 'Add to List' buttons. Recipe cards have 'View Full Recipe' links. Markdown is rendered properly.",
           "unit_tests": [
             "Test recipe data extraction from AI response",
@@ -468,12 +471,12 @@
             ]
           },
           "sub_tasks": [
-            {"id": "SUB-302-1", "status": "To Do", "description": "Create RecipeCard component with shadcn card"},
-            {"id": "SUB-302-2", "status": "To Do", "description": "Parse AI response to detect recipe data structure"},
-            {"id": "SUB-302-3", "status": "To Do", "description": "Conditionally render RecipeCard vs plain text message"},
-            {"id": "SUB-302-4", "status": "To Do", "description": "Implement 'Add Ingredients to List' with TanStack mutation"},
-            {"id": "SUB-302-5", "status": "To Do", "description": "Add markdown rendering for recipe steps using react-markdown"},
-            {"id": "SUB-302-6", "status": "To Do", "description": "Link recipe cards to full recipe detail page"}
+            {"id": "SUB-302-1", "status": "Completed", "description": "Create RecipeCard component with shadcn card"},
+            {"id": "SUB-302-2", "status": "Completed", "description": "Parse AI response to detect recipe data structure"},
+            {"id": "SUB-302-3", "status": "Completed", "description": "Conditionally render RecipeCard vs plain text message"},
+            {"id": "SUB-302-4", "status": "Completed", "description": "Implement 'Add Ingredients to List' with TanStack mutation"},
+            {"id": "SUB-302-5", "status": "Completed", "description": "Add markdown rendering for recipe steps using react-markdown"},
+            {"id": "SUB-302-6", "status": "Completed", "description": "Link recipe cards to full recipe detail page"}
           ]
         }
       ]

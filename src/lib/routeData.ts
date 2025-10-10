@@ -1,10 +1,27 @@
 import { type QueryClient, useSuspenseQuery } from '@tanstack/react-query'
 
+import type { GenerativeRecipeData } from '@/components/recipes/RecipeCard'
+
 export type RouteName = 'chat' | 'kitchen' | 'recipes' | 'planner'
+
+export type ChatMessageContent = string | RecipeMessage
+
+export interface RecipeMessage {
+  type: 'recipe'
+  data: GenerativeRecipeData
+}
+
+export interface ChatMessage {
+  id: string
+  role: 'user' | 'assistant'
+  timestamp: string
+  content: ChatMessageContent
+}
 
 interface ChatRouteData {
   quickPrompts: Array<{ title: string; description: string; icon: string }>
   pinnedThreads: Array<{ id: string; title: string; lastActivity: string }>
+  messages: ChatMessage[]
 }
 
 interface KitchenRouteData {
@@ -78,6 +95,138 @@ const DATA: RouteDataMap = {
         lastActivity: 'Active 2h ago',
       },
       { id: 'thread-002', title: 'Grill diagnostics with SmartFire', lastActivity: 'Updated yesterday' },
+    ],
+    messages: [
+      {
+        id: 'msg-001',
+        role: 'user',
+        timestamp: '2 minutes ago',
+        content:
+          'I have two salmon fillets, a sous-vide setup, and a countertop torch. Can you suggest something bright with citrus?',
+      },
+      {
+        id: 'msg-002',
+        role: 'assistant',
+        timestamp: 'Just now',
+        content: {
+          type: 'recipe',
+          data: {
+            id: 'recipe-ai-citrus-salmon',
+            title: 'Citrus Torch-Seared Salmon with Miso Glaze',
+            description:
+              'A sous-vide baseline for silky salmon finished under a torch with a blood-orange miso glaze and crisped aromatics.',
+            cuisine: 'Pacific Northwest',
+            tags: ['sous-vide', 'gluten-free', 'omega rich'],
+            totalMinutes: 45,
+            difficulty: 'moderate',
+            servings: 2,
+            heroImageUrl:
+              'https://images.unsplash.com/photo-1476124369491-e7addf5db371?auto=format&fit=crop&w=1200&q=80',
+            instructions: [
+              '1. Preheat your sous-vide bath to **50°C (122°F)**.',
+              '2. Whisk miso paste, honey, rice vinegar, and blood orange zest until smooth; reserve half for glazing.',
+              '3. Season salmon with salt, seal with half the miso mixture and thyme, then cook sous-vide for 30 minutes.',
+              '4. While it cooks, prep salad: shave fennel, segment citrus, and toss with olive oil and flaky salt.',
+              '5. Remove fillets, pat dry, brush with remaining glaze, and torch until the surface caramelizes.',
+              '6. Plate over fennel-citrus salad, finishing with micro herbs and a final drizzle of glaze.',
+            ].join('\n'),
+            ingredients: [
+              {
+                id: 'section-protein',
+                title: 'Protein & Marinade',
+                items: [
+                  {
+                    id: 'ingredient-salmon',
+                    name: 'Salmon fillets',
+                    quantity: '2 × 150 g portions',
+                    note: 'Pin bones removed, skin on',
+                  },
+                  {
+                    id: 'ingredient-miso',
+                    name: 'White miso paste',
+                    quantity: '2 tablespoons',
+                  },
+                  {
+                    id: 'ingredient-honey',
+                    name: 'Wildflower honey',
+                    quantity: '1 tablespoon',
+                  },
+                  {
+                    id: 'ingredient-vinegar',
+                    name: 'Rice vinegar',
+                    quantity: '1 teaspoon',
+                  },
+                  {
+                    id: 'ingredient-zest',
+                    name: 'Blood orange zest',
+                    quantity: 'Zest of 1 orange',
+                    note: 'Reserve juice for salad',
+                  },
+                  {
+                    id: 'ingredient-thyme',
+                    name: 'Fresh thyme sprigs',
+                    quantity: '2 sprigs',
+                  },
+                ],
+              },
+              {
+                id: 'section-salad',
+                title: 'Citrus Fennel Salad',
+                items: [
+                  {
+                    id: 'ingredient-fennel',
+                    name: 'Fennel bulb',
+                    quantity: '1 small, shaved thin',
+                  },
+                  {
+                    id: 'ingredient-orange',
+                    name: 'Blood orange segments',
+                    quantity: '1 whole orange',
+                  },
+                  {
+                    id: 'ingredient-microgreens',
+                    name: 'Micro herbs or dill fronds',
+                    quantity: 'A small handful',
+                  },
+                  {
+                    id: 'ingredient-oliveoil',
+                    name: 'Extra-virgin olive oil',
+                    quantity: '1 tablespoon',
+                  },
+                  {
+                    id: 'ingredient-salt',
+                    name: 'Flaky sea salt',
+                    quantity: 'To taste',
+                  },
+                ],
+              },
+              {
+                id: 'section-finish',
+                title: 'To Finish',
+                items: [
+                  {
+                    id: 'ingredient-torch',
+                    name: 'Kitchen torch',
+                    note: 'For caramelizing the glaze',
+                  },
+                  {
+                    id: 'ingredient-juice',
+                    name: 'Reserved blood orange juice',
+                    quantity: '1 tablespoon',
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+      {
+        id: 'msg-003',
+        role: 'assistant',
+        timestamp: 'Just now',
+        content:
+          'Torch the glaze from about 5 cm away for even caramelization. Let the salmon rest for a minute before plating so the glaze sets.',
+      },
     ],
   },
   kitchen: {
